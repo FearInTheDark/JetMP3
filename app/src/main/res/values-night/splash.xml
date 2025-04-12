@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SplashScreen.JetMP3" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/background_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logos__google_bard_icon</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/background_dark</item>
+        <item name="postSplashScreenTheme">@style/Theme.JetMP3</item>
+    </style>
+</resources>

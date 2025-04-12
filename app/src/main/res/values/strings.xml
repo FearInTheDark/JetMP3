@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">JetMP3</string>
+    <string name="notification_channel_name">Music Playback</string>
+</resources>

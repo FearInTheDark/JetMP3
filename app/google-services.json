@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "349494881210",
+    "project_id": "jetmp3-a1c79",
+    "storage_bucket": "jetmp3-a1c79.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:349494881210:android:0bff55a03f19fe11ffcb83",
+        "android_client_info": {
+          "package_name": "com.vincent.jetmp3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJak_hroMwaXN50ay_gHtR5r8DsqKoCJc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
