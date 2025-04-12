@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+	implementation(libs.androidx.espresso.core)
 	testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -84,7 +85,6 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.accompanist.navigation.animation)
     implementation(libs.coil.compose)
-    implementation(libs.androidx.material)
     ksp(libs.hilt.android.compiler)
     ksp(libs.androidx.hilt.compiler)
 

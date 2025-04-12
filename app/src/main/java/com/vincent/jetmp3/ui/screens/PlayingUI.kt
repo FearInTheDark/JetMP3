@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.vincent.jetmp3.ui.viewmodels.MusicViewModel
 
 @Composable
-fun PlayingScreen(viewModel: MusicViewModel) {
+fun PlayingScreen(viewModel: MusicViewModel = hiltViewModel()) {
 	val currentSong by viewModel.currentSong.collectAsState()
 	val isPlaying by viewModel.isPlaying.collectAsState()
 
@@ -37,12 +37,14 @@ fun PlayingScreen(viewModel: MusicViewModel) {
 				text = song.title, style = MaterialTheme.typography.headlineMedium,
 				color = MaterialTheme.colorScheme.onSurface
 			)
-			Text(song.artist, style = MaterialTheme.typography.bodyLarge,
-				color = MaterialTheme.colorScheme.onSurface)
+			Text(
+				song.artist, style = MaterialTheme.typography.bodyLarge,
+				color = MaterialTheme.colorScheme.onSurface
+			)
 
 			Spacer(modifier = Modifier.height(32.dp))
 			Row {
-				Button(onClick = { viewModel.playPrevious() }) {
+				Button(onClick = { }) {
 					Text("Previous")
 				}
 				Spacer(modifier = Modifier.width(8.dp))
@@ -50,7 +52,7 @@ fun PlayingScreen(viewModel: MusicViewModel) {
 					Text(if (isPlaying) "Pause" else "Play")
 				}
 				Spacer(modifier = Modifier.width(8.dp))
-				Button(onClick = { viewModel.playNext() }) {
+				Button(onClick = { }) {
 					Text("Next")
 				}
 			}

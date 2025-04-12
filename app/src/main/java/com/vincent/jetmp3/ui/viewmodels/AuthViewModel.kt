@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.ui.screens.auth
+package com.vincent.jetmp3.ui.viewmodels
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf

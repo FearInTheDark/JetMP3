@@ -26,7 +26,6 @@ firebaseAnalytics = "22.4.0"
 firebaseFirestoreKtx = "25.1.3"
 accompanistNavigationAnimation = "0.36.0"
 coilCompose = "2.7.0"
-material = "1.8.0-rc03"
 coreSplashscreen = "1.2.0-beta01"
 media3Exoplayer = "1.6.0"
 media3Session = "1.6.0"
@@ -63,7 +62,6 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 accompanist-navigation-animation = { group = "com.google.accompanist", name = "accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-androidx-material = { group = "androidx.compose.material", name = "material", version.ref = "material" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }

@@ -1,5 +1,11 @@
 package com.vincent.jetmp3.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -10,36 +16,52 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.vincent.jetmp3.ui.components.navigation.MyNavigationBar
+import com.vincent.jetmp3.ui.components.navigation.NowPlayingBar
 import com.vincent.jetmp3.ui.screens.auth.AuthScreen
-import com.vincent.jetmp3.ui.viewmodels.MusicViewModel
 import com.vincent.jetmp3.utils.Screen
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalPermissionsApi::class)
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun AppScreen() {
 	val navController = rememberNavController()
 	val navBackStackEntry by navController.currentBackStackEntryAsState()
 	val currentRoute = navBackStackEntry?.destination?.route
+	val permissionState = rememberPermissionState(Manifest.permission.READ_MEDIA_AUDIO)
+	val showNavBar by derivedStateOf {
+		currentRoute !in listOf(Screen.Auth.route, Screen.NowPlaying.route)
+	}
 
-	val showNavBar = remember(currentRoute) {
-		currentRoute !in listOf(
-			Screen.Auth.route,
-			Screen.PlayerScreen.route
-		)
+	LaunchedEffect(Unit) {
+		if (!permissionState.status.isGranted) {
+			permissionState.launchPermissionRequest()
+		}
+	}
+
+	if (permissionState.status.isGranted) {
+		LaunchedEffect(Unit) {
+			permissionState.launchPermissionRequest()
+		}
 	}
 
 	Box(
@@ -51,7 +73,6 @@ fun AppScreen() {
 		AppNavHost(navController)
 
 		if (showNavBar) {
-
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -78,7 +99,6 @@ fun AppScreen() {
 							)
 						)
 					)
-
 			)
 
 			Column(
@@ -87,6 +107,7 @@ fun AppScreen() {
 				horizontalAlignment = Alignment.CenterHorizontally,
 				verticalArrangement = Arrangement.Bottom
 			) {
+				NowPlayingBar { navController.navigate(Screen.NowPlaying.route) }
 				MyNavigationBar(
 					modifier = Modifier
 						.fillMaxWidth()
@@ -95,7 +116,7 @@ fun AppScreen() {
 								colors = if (isSystemInDarkTheme()) listOf(
 									Color.Transparent,
 									Color.Black.copy(0.7f),
-								) else  listOf(
+								) else listOf(
 									Color.Transparent,
 									Color.Gray.copy(0.8f),
 								),
@@ -113,25 +134,66 @@ fun AppScreen() {
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
-	val musicViewModel: MusicViewModel = hiltViewModel<MusicViewModel>()
 	NavHost(
 		navController = navController,
 		startDestination = Screen.Auth.route,
 		route = "main_graph"
 	) {
-		composable(route = Screen.Auth.route) {
+		composable(
+			route = Screen.Auth.route,
+			enterTransition = {
+				slideIntoContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Left,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				)
+			},
+			exitTransition = {
+				slideOutOfContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Down,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 100
+					)
+				)
+			}
+		) {
 			AuthScreen(navController = navController, onLogin = { navController.navigate("home") })
 		}
-		composable(route = Screen.Home.route) {
-			SongListScreen(musicViewModel)
+		composable(
+			route = Screen.Home.route,
+		) {
+			SongListScreen()
 		}
 
 		composable(route = Screen.Search.route) {
 			SearchScreen()
 		}
 
-		composable(route = Screen.NowPlaying.route) {
-			PlayingScreen(musicViewModel)
+		composable(
+			route = Screen.NowPlaying.route,
+			enterTransition = {
+				slideIntoContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Up,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				)
+			},
+			exitTransition = {
+				slideOutOfContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Down,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				)
+			}
+		) {
+			PlayingScreen()
 		}
 
 	}
