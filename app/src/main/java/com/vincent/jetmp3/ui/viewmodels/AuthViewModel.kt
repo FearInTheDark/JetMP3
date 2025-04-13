@@ -10,41 +10,41 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
 
 ) : ViewModel() {
-    private val _isLoggingIn: MutableState<Boolean> = mutableStateOf(false)
-    val isLoggingIn: MutableState<Boolean> = _isLoggingIn
+	private val _isLoggingIn: MutableState<Boolean> = mutableStateOf(false)
+	val isLoggingIn: MutableState<Boolean> = _isLoggingIn
 
-    private val _email : MutableState<String> = mutableStateOf("")
-    val email : MutableState<String> = _email
+	private val _email: MutableState<String> = mutableStateOf("")
+	val email: MutableState<String> = _email
 
-    private val _password : MutableState<String> = mutableStateOf("")
-    val password : MutableState<String> = _password
+	private val _password: MutableState<String> = mutableStateOf("")
+	val password: MutableState<String> = _password
 
-    private val _username : MutableState<String> = mutableStateOf("")
-    val username : MutableState<String> = _username
+	private val _username: MutableState<String> = mutableStateOf("")
+	val username: MutableState<String> = _username
 
-    fun setIsLoggingIn(value: Boolean) {
-        _isLoggingIn.value = value
-    }
+	fun setIsLoggingIn(value: Boolean) {
+		_isLoggingIn.value = value
+	}
 
-    fun setEmail(value: String) {
-        _email.value = value
-    }
+	fun setEmail(value: String) {
+		_email.value = value
+	}
 
-    fun setPassword(value: String) {
-        _password.value = value
-    }
+	fun setPassword(value: String) {
+		_password.value = value
+	}
 
-    fun setUsername(value: String) {
-        _username.value = value
-    }
+	fun setUsername(value: String) {
+		_username.value = value
+	}
 
-    fun clear() {
-        _email.value = ""
-        _password.value = ""
-        _username.value = ""
-    }
+	fun clear() {
+		_email.value = ""
+		_password.value = ""
+		_username.value = ""
+	}
 
-    fun login() {
-        println("Logging in with email: ${_email.value} and password: ${_password.value}")
-    }
+	fun login() {
+		println("Logging in with email: ${_email.value} and password: ${_password.value}")
+	}
 }

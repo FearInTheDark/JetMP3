@@ -99,6 +99,16 @@ class PlaybackManager @Inject constructor(
 		mediaController?.let { if (it.isPlaying) it.pause() else it.play() }
 	}
 
+	fun pause() {
+		mediaController?.pause()
+		scope.launch { persistPlaybackState(_currentSong.value!!, false, _progress.value) }
+	}
+
+	fun resume() {
+		mediaController?.play()
+		scope.launch { persistPlaybackState(_currentSong.value!!, true, _progress.value) }
+	}
+
 	private suspend fun persistPlaybackState(song: AudioFile, isPlaying: Boolean, progress: Long) {
 		context.playbackDataStore.edit { prefs ->
 			prefs[longPreferencesKey("id")] = song.id

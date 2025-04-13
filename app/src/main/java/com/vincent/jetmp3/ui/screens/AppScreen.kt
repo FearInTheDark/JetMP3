@@ -140,7 +140,7 @@ fun AppScreen() {
 fun AppNavHost(navController: NavHostController) {
 	NavHost(
 		navController = navController,
-		startDestination = Screen.Home.route,
+		startDestination = Screen.Auth.route,
 		route = "main_graph"
 	) {
 		composable(
@@ -247,7 +247,7 @@ fun AppNavHost(navController: NavHostController) {
 		) {
 //			PlayingScreen()
 			AnotherPlayingScreen {
-				navController.popBackStack()
+				navController.navigateUp()
 			}
 		}
 

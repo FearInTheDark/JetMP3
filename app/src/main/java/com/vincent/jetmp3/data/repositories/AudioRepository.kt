@@ -2,6 +2,7 @@ package com.vincent.jetmp3.data.repositories
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.provider.MediaStore
 import com.vincent.jetmp3.data.models.AudioFile
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class AudioRepository @Inject constructor() {
 					val displayName = it.getString(displayNameColumn) ?: "Unknown"
 					val artist = it.getString(artistColumn) ?: "Unknown"
 					val uri = it.getString(dataColumn)
+					val ur = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 					val duration = it.getLong(durationColumn)
 					audioList.add(AudioFile(id, displayName, artist, uri, duration))
 				}

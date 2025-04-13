@@ -1,6 +1,5 @@
 package com.vincent.jetmp3.ui.components.navigation
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,7 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,10 +52,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.viewmodels.NowPlayingBarViewModel
+import kotlin.math.abs
 
 @Composable
 fun NowPlayingBar(
-	nowPlayingBarViewModel: NowPlayingBarViewModel = hiltViewModel<NowPlayingBarViewModel>(),
+	nowPlayingBarViewModel: NowPlayingBarViewModel = hiltViewModel(),
 	onClick: () -> Unit
 ) {
 	var visible by remember { mutableStateOf(false) }
@@ -98,20 +98,20 @@ fun NowPlayingBar(
 				.background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(6.dp))
 				.padding(6.dp)
 				.pointerInput(Unit) {
-					detectHorizontalDragGestures(
-						onDragEnd = {
-							Toast.makeText(
-								context,
-								"Drag ended",
-								Toast.LENGTH_SHORT
-							).show()
-						},
-						onHorizontalDrag = {change, dragAmount ->
-							change.consume()
+					detectDragGestures { _, dragAmount ->
+						val (x, y) = dragAmount
+						if (y > 0) {
+							if (abs(y) > 10.dp.toPx()) {
+								visible = false
+								nowPlayingBarViewModel.pause()
+							}
+						} else if (y < 0) {
+							if (abs(y) > 10.dp.toPx()) {
+								onClick()
+							}
 						}
-					)
-				}
-			,
+					}
+				},
 			contentAlignment = Alignment.Center
 		)
 		{
@@ -193,7 +193,8 @@ fun NowPlayingBar(
 					.fillMaxWidth()
 					.height(2.dp)
 					.offset(y = 6.dp),
-				color = MaterialTheme.colorScheme.onTertiary
+				color = MaterialTheme.colorScheme.onSurface,
+				trackColor = MaterialTheme.colorScheme.onSurface.copy(0.2f),
 			)
 		}
 	}

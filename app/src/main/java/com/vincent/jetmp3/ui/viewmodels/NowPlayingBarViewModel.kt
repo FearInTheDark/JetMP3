@@ -7,8 +7,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NowPlayingBarViewModel @Inject constructor(
-	playbackManager: PlaybackManager
+	private val playbackManager: PlaybackManager
 ): ViewModel() {
 	val currentSong = playbackManager.currentSong
+	val isPlaying = playbackManager.isPlaying
 	val progress = playbackManager.progress
+
+	fun pause() = playbackManager.pause()
+
 }

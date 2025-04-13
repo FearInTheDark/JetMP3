@@ -70,6 +70,7 @@ dependencies {
 	implementation(libs.androidx.espresso.core)
 	implementation(libs.androidx.datastore)
 	implementation(libs.androidx.datastore.preferences)
+	implementation(libs.androidx.material)
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
@@ -86,14 +87,15 @@ dependencies {
 	// Media3 - ExoPlayer
 	implementation(libs.androidx.media3.exoplayer)
 	implementation(libs.androidx.media3.session)
+	implementation(libs.androidx.media3.common)
 	implementation(libs.androidx.media3.ui)
 
 	// Splash Screen
 	implementation(libs.androidx.core.splashscreen)
 
 	// Firebase
-	implementation(platform(libs.firebase.bom))
-	implementation(libs.firebase.analytics)
+//	implementation(platform(libs.firebase.bom))
+//	implementation(libs.firebase.analytics)
 
 	// Hilt
 	implementation(libs.hilt.android)

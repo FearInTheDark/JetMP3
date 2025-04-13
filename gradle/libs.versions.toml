@@ -32,6 +32,8 @@ media3Session = "1.6.0"
 media3Ui = "1.6.0"
 datastore = "1.2.0-alpha01"
 datastorePreferences = "1.2.0-alpha01"
+material = "1.8.0-rc03"
+media3Common = "1.6.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -70,6 +72,8 @@ androidx-media3-session = { group = "androidx.media3", name = "media3-session", 
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+androidx-material = { group = "androidx.compose.material", name = "material", version.ref = "material" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3Common" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

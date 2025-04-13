@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,16 +20,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.Slider
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,6 +63,8 @@ fun AnotherPlayingScreen(
 	val currentSong by viewModel.currentSong.collectAsState()
 	val isPlaying by viewModel.isPlaying.collectAsState()
 	val progress by viewModel.progress.collectAsState()
+
+	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
 
 	val animProgress = remember { Animatable(0f) }
 
@@ -81,14 +88,24 @@ fun AnotherPlayingScreen(
 		label = "albumScale"
 	)
 
-	Column(
-		modifier = Modifier
-			.fillMaxSize()
-			.padding(8.dp),
-		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.Top
-	) {
-		currentSong?.let {
+	BottomSheetScaffold(
+		scaffoldState = bottomSheetScaffoldState,
+		sheetContent = @Composable {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(8.dp),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.Top
+			) {
+				Text(
+					text = "Bottom Sheet Content",
+					style = HeadLineMedium,
+					color = MaterialTheme.colorScheme.onSurface
+				)
+			}
+		},
+		topBar = {
 			TopAppBar(
 				title = {
 					Text(
@@ -115,122 +132,142 @@ fun AnotherPlayingScreen(
 					}
 				},
 			)
-
-			Box(
-				Modifier
+		},
+		sheetPeekHeight = 50.dp,
+		containerColor = MaterialTheme.colorScheme.surface,
+		content = @Composable {innerPadding ->
+			Column(
+				modifier = Modifier
 					.fillMaxSize()
-					.padding(4.dp),
-				contentAlignment = Alignment.Center
+					.padding(innerPadding),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.Top
 			) {
-
-				Column(
-					Modifier
-						.fillMaxSize()
-						.padding(horizontal = 8.dp),
-					verticalArrangement = Arrangement.Center,
-					horizontalAlignment = Alignment.CenterHorizontally
-				) {
-					AsyncImage(
-						model = "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf",
-						contentDescription = "Image",
-						contentScale = ContentScale.Crop,
-						modifier = Modifier
-							.scale(if (isPlaying) albumScale else 1f)
-							.clip(RoundedCornerShape(10.dp))
-							.fillMaxWidth(0.95f)
-							.aspectRatio(1f)
-
-					)
-
-					Spacer(Modifier.height(24.dp))
-
-					Row(
-						Modifier
-							.fillMaxWidth()
-							.padding(6.dp),
-						Arrangement.SpaceBetween,
-						Alignment.CenterVertically
-					) {
-						Column(
-							modifier = Modifier
-								.wrapContentSize()
-								.padding(2.dp),
-							verticalArrangement = Arrangement.Center,
-							horizontalAlignment = Alignment.Start
-						) {
-							Text(
-								text = currentSong?.title ?: "Unknown",
-								style = HeadLineMedium,
-								color = MaterialTheme.colorScheme.onSurface
-							)
-
-							Text(
-								text = currentSong?.artist ?: "Taylor Swift",
-								style = MaterialTheme.typography.labelMedium,
-								color = MaterialTheme.colorScheme.onSurface
-							)
-						}
-					}
-
-					Spacer(Modifier.height(12.dp))
-
+				currentSong?.let {
 					Box(
 						Modifier
-							.fillMaxWidth()
-							.wrapContentSize(),
+							.fillMaxSize()
+							.padding(4.dp),
 						contentAlignment = Alignment.Center
 					) {
+
 						Column(
+							Modifier
+								.fillMaxSize()
+								.padding(horizontal = 8.dp),
+							verticalArrangement = Arrangement.Center,
 							horizontalAlignment = Alignment.CenterHorizontally
 						) {
-							LinearProgressIndicator(
-								progress = { progressFloat },
-								color = Color.White,
+							AsyncImage(
+								model = "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf",
+								contentDescription = "Image",
+								contentScale = ContentScale.Crop,
 								modifier = Modifier
+									.scale(if (isPlaying) albumScale else 1f)
+									.clip(RoundedCornerShape(10.dp))
 									.fillMaxWidth(0.95f)
-									.height(4.dp),
+									.aspectRatio(1f)
+
 							)
-							Spacer(Modifier.height(4.dp))
+
+							Spacer(Modifier.height(24.dp))
 
 							Row(
 								Modifier
-									.fillMaxWidth(0.95f)
-									.padding(
-										vertical = 4.dp,
-										horizontal = 4.dp
-									),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.SpaceBetween,
+									.fillMaxWidth()
+									.padding(6.dp),
+								Arrangement.SpaceBetween,
+								Alignment.CenterVertically
 							) {
-								Text(
+								Column(
+									modifier = Modifier
+										.wrapContentSize()
+										.padding(2.dp),
+									verticalArrangement = Arrangement.Center,
+									horizontalAlignment = Alignment.Start
+								) {
+									Text(
+										text = currentSong?.title ?: "Unknown",
+										style = HeadLineMedium,
+										color = MaterialTheme.colorScheme.onSurface,
+										modifier = Modifier.basicMarquee()
+									)
+
+									Text(
+										text = currentSong?.artist ?: "Taylor Swift",
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface
+									)
+								}
+							}
+
+							Spacer(Modifier.height(12.dp))
+
+							Box(
+								Modifier
+									.fillMaxWidth()
+									.wrapContentSize(),
+								contentAlignment = Alignment.Center
+							) {
+								Column(
+									horizontalAlignment = Alignment.CenterHorizontally
+								) {
+//							LinearProgressIndicator(
+//								progress = { progressFloat },
+//								color = Color.White,
+//								modifier = Modifier
+//									.fillMaxWidth(0.95f)
+//									.height(4.dp),
+//							)
+
+									Slider(
+										value = progressFloat,
+										onValueChange = { },
+										enabled = false,
+										modifier = Modifier
+											.fillMaxWidth()
+											.height(4.dp),
+										colors = SliderDefaults.colors(
+											activeTrackColor = MaterialTheme.colorScheme.onSurface,
+											inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(
+												0.2f
+											),
+											thumbColor = MaterialTheme.colorScheme.onSurface,
+											disabledActiveTrackColor = MaterialTheme.colorScheme.onSurface,
+										),
+									)
+
+									Spacer(Modifier.height(4.dp))
+
+									Row(
+										Modifier
+											.fillMaxWidth(0.95f)
+											.padding(
+												vertical = 4.dp,
+												horizontal = 4.dp
+											),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
 //									text = durationToString(progress),
-									text = "1:00",
-									color = MaterialTheme.colorScheme.onSurface,
-									style = LabelLineSmall
-								)
-								Text(
+											text = "1:00",
+											color = MaterialTheme.colorScheme.onSurface,
+											style = LabelLineSmall
+										)
+										Text(
 //									text = durationToString(currentSong?.duration),
-									text = progress.toString(),
-									color = MaterialTheme.colorScheme.onSurface,
-									style = LabelLineSmall
-								)
+											text = progress.toString(),
+											color = MaterialTheme.colorScheme.onSurface,
+											style = LabelLineSmall
+										)
+									}
+								}
 							}
 						}
-
 					}
 				}
 			}
 		}
-	}
-}
-
-fun durationToString(duration: Long?): String {
-	if (duration == null || duration <= 0) {
-		return "00:00"
-	}
-
-	val minutes = (duration / 1000) / 60
-	val seconds = (duration / 1000) % 60
-
-	return String.format(null, "%02d:%02d", minutes, seconds)
+	)
 }
