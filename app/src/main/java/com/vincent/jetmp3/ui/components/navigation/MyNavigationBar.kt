@@ -21,13 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.vincent.jetmp3.R
+import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.utils.NavigationBarItem
 import com.vincent.jetmp3.utils.Screen
 
@@ -65,7 +63,7 @@ fun MyNavigationBar(
 			activeIcon = R.drawable.solar__play_bold
 		),
 
-	)
+		)
 
 
 	NavigationBar(
@@ -127,9 +125,8 @@ fun NavBarItem(
 			)
 			Text(
 				text = value.title,
-				color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Gray,
-				fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
-				fontSize = 12.sp
+				style = LabelLineSmall,
+				color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Gray
 			)
 		}
 	}

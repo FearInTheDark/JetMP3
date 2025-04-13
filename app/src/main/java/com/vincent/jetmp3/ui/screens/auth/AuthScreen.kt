@@ -2,7 +2,6 @@ package com.vincent.jetmp3.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.vincent.jetmp3.R
+import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -66,14 +66,11 @@ fun AuthScreen(
 
 
 			Text(
-				text = if (authViewModel.isLoggingIn.value) "Log in to ${stringResource(R.string.app_name)}" else "Sign up for ${
-					stringResource(
-						R.string.app_name
-					)
-				}",
+				text = if (authViewModel.isLoggingIn.value)
+					"Log in to ${stringResource(R.string.app_name)}"
+				else "Sign up for ${stringResource(R.string.app_name)}",
+				style = HeadStyleLarge,
 				color = MaterialTheme.colorScheme.onSurface,
-				fontSize = 24.sp,
-				fontWeight = FontWeight.Bold,
 				modifier = Modifier.padding(bottom = 24.dp)
 			)
 

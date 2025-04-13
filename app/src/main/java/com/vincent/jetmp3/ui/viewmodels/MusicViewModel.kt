@@ -1,6 +1,7 @@
 package com.vincent.jetmp3.ui.viewmodels
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.vincent.jetmp3.data.models.AudioFile
@@ -23,18 +24,29 @@ class MusicViewModel @Inject constructor(
 
 	val currentSong = playbackManager.currentSong
 	val isPlaying = playbackManager.isPlaying
+	val progress = playbackManager.progress
+
+	private val _fetching = MutableStateFlow(false)
+	val fetching = _fetching.asStateFlow()
 
 	init {
 		fetchAudioFiles()
 	}
 
-	private fun fetchAudioFiles() {
+	fun fetchAudioFiles() {
+		_fetching.value = true
 		viewModelScope.launch {
-			_audioFiles.value =
-				audioRepository.getAudioFiles(getApplication<Application>().contentResolver)
+			try {
+				_audioFiles.value =
+					audioRepository.getAudioFiles(getApplication<Application>().contentResolver)
+				Log.d("MusicViewModel", "Audio files fetched: ${_audioFiles.value.size}")
+			} finally {
+				_fetching.value = false
+			}
 		}
 	}
 
 	fun playSong(song: AudioFile) = playbackManager.playSong(song)
+
 	fun togglePlayPause() = playbackManager.toggle()
 }

@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.ui.components.navigation
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -11,6 +12,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,13 +41,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +62,7 @@ fun NowPlayingBar(
 	var visible by remember { mutableStateOf(false) }
 	val currentSong by nowPlayingBarViewModel.currentSong.collectAsState()
 	val progress by nowPlayingBarViewModel.progress.collectAsState()
+	val context = LocalContext.current
 
 	val progressFloat = remember(currentSong, progress) {
 		val duration = currentSong?.duration?.takeIf { it > 0 } ?: return@remember 0f
@@ -93,7 +96,22 @@ fun NowPlayingBar(
 				.clickable { onClick() }
 				.fillMaxWidth(0.95f)
 				.background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(6.dp))
-				.padding(6.dp),
+				.padding(6.dp)
+				.pointerInput(Unit) {
+					detectHorizontalDragGestures(
+						onDragEnd = {
+							Toast.makeText(
+								context,
+								"Drag ended",
+								Toast.LENGTH_SHORT
+							).show()
+						},
+						onHorizontalDrag = {change, dragAmount ->
+							change.consume()
+						}
+					)
+				}
+			,
 			contentAlignment = Alignment.Center
 		)
 		{
@@ -130,7 +148,7 @@ fun NowPlayingBar(
 							color = MaterialTheme.colorScheme.onSurface,
 							fontWeight = FontWeight.Bold,
 							fontSize = 14.sp,
-							letterSpacing = TextUnit(0.7f, TextUnitType.Sp),
+							letterSpacing = (-0.5).sp,
 							overflow = TextOverflow.Ellipsis,
 							modifier = Modifier.basicMarquee()
 						)
@@ -175,6 +193,7 @@ fun NowPlayingBar(
 					.fillMaxWidth()
 					.height(2.dp)
 					.offset(y = 6.dp),
+				color = MaterialTheme.colorScheme.onTertiary
 			)
 		}
 	}

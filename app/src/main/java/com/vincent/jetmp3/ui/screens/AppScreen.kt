@@ -6,6 +6,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -25,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -136,7 +140,7 @@ fun AppScreen() {
 fun AppNavHost(navController: NavHostController) {
 	NavHost(
 		navController = navController,
-		startDestination = Screen.Auth.route,
+		startDestination = Screen.Home.route,
 		route = "main_graph"
 	) {
 		composable(
@@ -155,7 +159,7 @@ fun AppNavHost(navController: NavHostController) {
 					towards = AnimatedContentTransitionScope.SlideDirection.Down,
 					animationSpec = tween(
 						durationMillis = 1000,
-						delayMillis = 100
+						delayMillis = 10
 					)
 				)
 			}
@@ -164,12 +168,60 @@ fun AppNavHost(navController: NavHostController) {
 		}
 		composable(
 			route = Screen.Home.route,
+			enterTransition = {
+				scaleIn(
+					initialScale = 0.8f,
+					transformOrigin = TransformOrigin.Center,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				) + fadeIn(
+					initialAlpha = 0.0f,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				) + slideIntoContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Up,
+					animationSpec = tween(
+						durationMillis = 300,
+						delayMillis = 10
+					)
+				)
+			},
+			exitTransition = {
+				scaleOut(
+					targetScale = 0.8f,
+					transformOrigin = TransformOrigin.Center,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				) + fadeOut(
+					targetAlpha = 0.0f,
+					animationSpec = tween(
+						durationMillis = 1000,
+						delayMillis = 10
+					)
+				) +  slideOutOfContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Down,
+					animationSpec = tween(
+						durationMillis = 300,
+						delayMillis = 10
+					)
+				)
+			}
 		) {
 			SongListScreen()
 		}
 
 		composable(route = Screen.Search.route) {
 			SearchScreen()
+		}
+
+		composable(route = Screen.Library.route) {
+			LibraryScreen()
 		}
 
 		composable(
@@ -193,7 +245,10 @@ fun AppNavHost(navController: NavHostController) {
 				)
 			}
 		) {
-			PlayingScreen()
+//			PlayingScreen()
+			AnotherPlayingScreen {
+				navController.popBackStack()
+			}
 		}
 
 	}

@@ -1,6 +1,6 @@
 package com.vincent.jetmp3.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,99 +34,124 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.viewmodels.MusicViewModel
 import okhttp3.internal.concurrent.formatDuration
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongListScreen(
 	viewModel: MusicViewModel = hiltViewModel(),
 ) {
 	val audioFiles by viewModel.audioFiles.collectAsState()
+	val refreshing by viewModel.fetching.collectAsState()
 
-	Column(
-		Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)
-			.padding(4.dp),
-		verticalArrangement = Arrangement.spacedBy(12.dp),
-		horizontalAlignment = Alignment.CenterHorizontally
+	PullToRefreshBox(
+		isRefreshing = refreshing,
+		onRefresh = { viewModel.fetchAudioFiles() },
 	) {
-
-		TopAppBar(
-			title = { Text("JetMP3")}
-		)
-
-		LazyColumn(
-			modifier = Modifier
+		Column(
+			Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp)),
-			contentPadding = PaddingValues(12.dp),
-			verticalArrangement = Arrangement.spacedBy(8.dp)
+				.background(MaterialTheme.colorScheme.surface)
+				.padding(4.dp),
+			verticalArrangement = Arrangement.spacedBy(12.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
-			items(audioFiles) { audioFile ->
-				Card (
-					modifier = Modifier
-						.fillMaxWidth()
-						.clickable { viewModel.playSong(audioFile) }
-						.animateItemPlacement(),
-					shape = RoundedCornerShape(12.dp),
-					colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-					elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-				) {
-					Row(
+
+			TopAppBar(
+				title = {
+					Text(
+						text = "JetMP3",
+						style = HeadStyleLarge
+					)
+				},
+				actions = {
+					Icon(
+						imageVector = Icons.Default.MusicNote,
+						contentDescription = "Now Playing",
+						modifier = Modifier
+							.padding(8.dp)
+							.clickable { /* Navigate to Now Playing screen */ }
+					)
+				},
+			)
+
+			LazyColumn(
+				modifier = Modifier
+					.fillMaxSize()
+					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp)),
+				contentPadding = PaddingValues(
+					top = 12.dp,
+					bottom = 150.dp
+				),
+				verticalArrangement = Arrangement.spacedBy(8.dp)
+			) {
+				items(audioFiles) { audioFile ->
+					Card(
 						modifier = Modifier
 							.fillMaxWidth()
-							.padding(12.dp),
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.SpaceBetween
+							.clickable { viewModel.playSong(audioFile) },
+						shape = RoundedCornerShape(12.dp),
+						colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+						elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
 					) {
 						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(12.dp),
 							verticalAlignment = Alignment.CenterVertically,
-							horizontalArrangement = Arrangement.spacedBy(12.dp)
+							horizontalArrangement = Arrangement.SpaceBetween
 						) {
-							Box(
-								modifier = Modifier
-									.size(48.dp)
-									.background(
-										MaterialTheme.colorScheme.secondaryContainer,
-										RoundedCornerShape(8.dp)
+							Row(
+								verticalAlignment = Alignment.CenterVertically,
+								horizontalArrangement = Arrangement.spacedBy(12.dp)
+							) {
+								Box(
+									modifier = Modifier
+										.size(48.dp)
+										.background(
+											MaterialTheme.colorScheme.secondaryContainer,
+											RoundedCornerShape(8.dp)
+										)
+								) {
+									// Placeholder for album art or song icon
+									Icon(
+										imageVector = Icons.Default.MusicNote,
+										contentDescription = null,
+										modifier = Modifier.align(Alignment.Center),
+										tint = MaterialTheme.colorScheme.onSecondaryContainer
 									)
-							) {
-								// Placeholder for album art or song icon
-								Icon(
-									imageVector = Icons.Default.MusicNote,
-									contentDescription = null,
-									modifier = Modifier.align(Alignment.Center),
-									tint = MaterialTheme.colorScheme.onSecondaryContainer
-								)
+								}
+
+								Column(
+									verticalArrangement = Arrangement.spacedBy(2.dp),
+									modifier = Modifier.widthIn(max = 220.dp)
+								) {
+									Text(
+										text = audioFile.title,
+										style = MaterialTheme.typography.bodyLarge,
+										color = MaterialTheme.colorScheme.onSurface,
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis
+									)
+									Text(
+										text = audioFile.artist,
+										style = MaterialTheme.typography.bodySmall,
+										color = MaterialTheme.colorScheme.onSurfaceVariant,
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis
+									)
+								}
 							}
 
-							Column(
-								verticalArrangement = Arrangement.spacedBy(2.dp),
-								modifier = Modifier.widthIn(max = 220.dp)
-							) {
-								Text(
-									text = audioFile.title,
-									style = MaterialTheme.typography.bodyLarge,
-									color = MaterialTheme.colorScheme.onSurface,
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis
-								)
-								Text(
-									text = audioFile.artist,
-									style = MaterialTheme.typography.bodySmall,
-									color = MaterialTheme.colorScheme.onSurfaceVariant,
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis
-								)
-							}
+							// Optional: Duration or play icon
+							Text(
+								text = formatDuration(audioFile.duration),
+								style = MaterialTheme.typography.labelMedium,
+								color = MaterialTheme.colorScheme.onSurfaceVariant
+							)
 						}
-
-						// Optional: Duration or play icon
-						Text(
-							text = formatDuration(audioFile.duration),
-							style = MaterialTheme.typography.labelMedium,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
 					}
 				}
 			}

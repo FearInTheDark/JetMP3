@@ -23,4 +23,5 @@ object AppModule {
 	fun provideAudioRepository(): AudioRepository {
 		return AudioRepository()
 	}
+
 }
