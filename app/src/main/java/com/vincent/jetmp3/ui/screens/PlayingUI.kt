@@ -7,7 +7,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +21,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Slider
@@ -32,49 +37,64 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.HeadLineMedium
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
-import com.vincent.jetmp3.ui.viewmodels.MusicViewModel
+import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
+import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun AnotherPlayingScreen(
-	viewModel: MusicViewModel = hiltViewModel(),
+fun PlayingScreen(
+	viewModel: AudioViewModel = hiltViewModel(),
 	onTopAppClick: () -> Unit = {}
 ) {
 
-	val currentSong by viewModel.currentSong.collectAsState()
-	val isPlaying by viewModel.isPlaying.collectAsState()
-	val progress by viewModel.progress.collectAsState()
+	val currentSong = viewModel.currentSelectedAudio
+	val isPlaying = viewModel.isPlaying
+	val progress = viewModel.progress
+	val progressString = viewModel.progressString
+	var sliderProgress by remember { mutableFloatStateOf(0f) }
+	var isUserSeeking by remember { mutableStateOf(false) }
 
-	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
+	val standardBottomSheet = rememberStandardBottomSheetState(
+		initialValue = SheetValue.Hidden,
+		skipHiddenState = false,
+	)
+	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+		bottomSheetState = standardBottomSheet,
+	)
+	val scope = rememberCoroutineScope()
 
 	val animProgress = remember { Animatable(0f) }
 
 	LaunchedEffect(progress) {
-		animProgress.animateTo(progress.toFloat(), animationSpec = tween(500))
-	}
-
-	val progressFloat = remember(currentSong, progress) {
-		val duration = currentSong?.duration?.takeIf { it > 0 } ?: return@remember 0f
-		(progress.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+		animProgress.animateTo(progress, animationSpec = tween(500))
 	}
 
 	val infiniteTransition = rememberInfiniteTransition(label = "albumPulse")
@@ -133,9 +153,9 @@ fun AnotherPlayingScreen(
 				},
 			)
 		},
-		sheetPeekHeight = 50.dp,
+		sheetPeekHeight = 36.dp,
 		containerColor = MaterialTheme.colorScheme.surface,
-		content = @Composable {innerPadding ->
+		content = @Composable { innerPadding ->
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
@@ -167,6 +187,18 @@ fun AnotherPlayingScreen(
 									.clip(RoundedCornerShape(10.dp))
 									.fillMaxWidth(0.95f)
 									.aspectRatio(1f)
+									.combinedClickable(
+										onClick = {},
+										onLongClick = {
+											scope.launch {
+												when (bottomSheetScaffoldState.bottomSheetState.currentValue) {
+													SheetValue.Hidden -> bottomSheetScaffoldState.bottomSheetState.expand()
+													SheetValue.PartiallyExpanded -> bottomSheetScaffoldState.bottomSheetState.expand()
+													SheetValue.Expanded -> bottomSheetScaffoldState.bottomSheetState.hide()
+												}
+											}
+										}
+									)
 
 							)
 
@@ -181,22 +213,45 @@ fun AnotherPlayingScreen(
 							) {
 								Column(
 									modifier = Modifier
+										.fillMaxWidth(0.7f)
 										.wrapContentSize()
 										.padding(2.dp),
 									verticalArrangement = Arrangement.Center,
 									horizontalAlignment = Alignment.Start
 								) {
 									Text(
-										text = currentSong?.title ?: "Unknown",
+										text = currentSong.title,
 										style = HeadLineMedium,
 										color = MaterialTheme.colorScheme.onSurface,
 										modifier = Modifier.basicMarquee()
 									)
 
 									Text(
-										text = currentSong?.artist ?: "Taylor Swift",
+										text = currentSong.artist,
 										style = MaterialTheme.typography.labelMedium,
 										color = MaterialTheme.colorScheme.onSurface
+									)
+								}
+
+								Column(
+									Modifier
+										.wrapContentSize()
+										.padding(2.dp),
+									verticalArrangement = Arrangement.Center,
+									horizontalAlignment = Alignment.End
+								) {
+									Text(
+										text = progress.toString(),
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface
+									)
+									Text(
+										text = bottomSheetScaffoldState.bottomSheetState.currentValue.toString(),
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface,
+										overflow = TextOverflow.Ellipsis,
+										maxLines = 1,
+										softWrap = false,
 									)
 								}
 							}
@@ -221,9 +276,17 @@ fun AnotherPlayingScreen(
 //							)
 
 									Slider(
-										value = progressFloat,
-										onValueChange = { },
-										enabled = false,
+										value = if (isUserSeeking) sliderProgress else progress,
+										onValueChange = {
+											sliderProgress = it
+											isUserSeeking = true
+										},
+										onValueChangeFinished = {
+											viewModel.onUiEvent(UIEvent.UpdateProgress(sliderProgress / 100))
+											isUserSeeking = false
+										},
+										valueRange = 0f..100f,
+										enabled = true,
 										modifier = Modifier
 											.fillMaxWidth()
 											.height(4.dp),
@@ -257,9 +320,58 @@ fun AnotherPlayingScreen(
 										)
 										Text(
 //									text = durationToString(currentSong?.duration),
-											text = progress.toString(),
+											text = progressString,
 											color = MaterialTheme.colorScheme.onSurface,
 											style = LabelLineSmall
+										)
+									}
+								}
+							}
+
+							Box(
+								Modifier.fillMaxWidth(),
+								contentAlignment = Alignment.Center
+							) {
+								Row(
+									horizontalArrangement = Arrangement.spacedBy(28.dp),
+									verticalAlignment = Alignment.CenterVertically,
+								) {
+									IconButton(
+										onClick = { viewModel.onUiEvent(UIEvent.SeekToPrevious) }
+									) {
+										Icon(
+											painter = painterResource(R.drawable.mage__previous_fill),
+											contentDescription = "previous",
+											modifier = Modifier.size(32.dp),
+										)
+									}
+									Box {
+										IconButton(
+											onClick = {
+												viewModel.onUiEvent(UIEvent.PlayPause)
+											},
+											modifier = Modifier
+												.size(80.dp)
+												.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+										) {
+											Icon(
+												painter = painterResource(
+													if (isPlaying) R.drawable.solar__pause_bold
+													else R.drawable.solar__play_bold
+												),
+												contentDescription = "play",
+												modifier = Modifier.size(32.dp),
+												tint = MaterialTheme.colorScheme.surface
+											)
+										}
+									}
+									IconButton(
+										onClick = { viewModel.onUiEvent(UIEvent.SeekToNext) },
+									) {
+										Icon(
+											painter = painterResource(R.drawable.mage__next_fill),
+											contentDescription = "next",
+											modifier = Modifier.size(32.dp),
 										)
 									}
 								}

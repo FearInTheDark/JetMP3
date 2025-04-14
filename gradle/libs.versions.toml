@@ -34,6 +34,12 @@ datastore = "1.2.0-alpha01"
 datastorePreferences = "1.2.0-alpha01"
 material = "1.8.0-rc03"
 media3Common = "1.6.0"
+glide = "5.0.0-rc01"
+legacySupportV4 = "1.0.0"
+media3DatasourceOkhttp = "1.6.0"
+kotlinUrlGen = "1.10.0"
+cloudinaryAndroid = "3.0.2"
+paletteKtx = "1.0.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -74,6 +80,12 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore", version
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 androidx-material = { group = "androidx.compose.material", name = "material", version.ref = "material" }
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3Common" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
+androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3DatasourceOkhttp" }
+kotlin-url-gen = { group = "com.cloudinary", name = "kotlin-url-gen", version.ref = "kotlinUrlGen" }
+cloudinary-android = { group = "com.cloudinary", name = "cloudinary-android", version.ref = "cloudinaryAndroid" }
+androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -82,3 +94,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "googleKsp" }
 google-services = {id = "com.google.gms.google-services", version = "4.4.2"}
+parcelize = { id = "kotlin-parcelize" }

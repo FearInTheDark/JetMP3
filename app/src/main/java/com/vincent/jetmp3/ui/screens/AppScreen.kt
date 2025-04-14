@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,13 +43,16 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.vincent.jetmp3.ui.components.navigation.MyNavigationBar
 import com.vincent.jetmp3.ui.components.navigation.NowPlayingBar
 import com.vincent.jetmp3.ui.screens.auth.AuthScreen
+import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.utils.Screen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun AppScreen() {
+fun AppScreen(
+	onItemClick: () -> Unit
+) {
 	val navController = rememberNavController()
 	val navBackStackEntry by navController.currentBackStackEntryAsState()
 	val currentRoute = navBackStackEntry?.destination?.route
@@ -74,7 +79,9 @@ fun AppScreen() {
 			.background(MaterialTheme.colorScheme.surface),
 		contentAlignment = Alignment.Center,
 	) {
-		AppNavHost(navController)
+		AppNavHost(navController) {
+			onItemClick()
+		}
 
 		if (showNavBar) {
 			Box(
@@ -87,8 +94,8 @@ fun AppScreen() {
 							colors = if (isSystemInDarkTheme()) listOf(
 								Color.Black.copy(0.1f),
 								Color.Black.copy(0.3f),
-								Color.Black.copy(0.8f),
-								Color.Black.copy(0.8f),
+								Color.Black.copy(0.4f),
+								Color.Black.copy(0.7f),
 								Color.Black.copy(0.85f),
 								Color.Black.copy(0.9f),
 								Color.Black,
@@ -137,11 +144,12 @@ fun AppScreen() {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
+	val audioViewModel = hiltViewModel<AudioViewModel>()
 	NavHost(
 		navController = navController,
-		startDestination = Screen.Auth.route,
-		route = "main_graph"
+		startDestination = Screen.Home.route,
+		route = "main_graph",
 	) {
 		composable(
 			route = Screen.Auth.route,
@@ -213,7 +221,9 @@ fun AppNavHost(navController: NavHostController) {
 				)
 			}
 		) {
-			SongListScreen()
+			SongListScreen(audioViewModel) {
+				onItemClick()
+			}
 		}
 
 		composable(route = Screen.Search.route) {
@@ -246,7 +256,7 @@ fun AppNavHost(navController: NavHostController) {
 			}
 		) {
 //			PlayingScreen()
-			AnotherPlayingScreen {
+			PlayingScreen(audioViewModel) {
 				navController.navigateUp()
 			}
 		}

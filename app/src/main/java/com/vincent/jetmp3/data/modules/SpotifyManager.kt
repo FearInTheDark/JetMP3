@@ -8,7 +8,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vincent.jetmp3.BuildConfig
 import com.vincent.jetmp3.data.datastore.apiTokenDataStore
-import com.vincent.jetmp3.data.enums.FetchState
+import com.vincent.jetmp3.data.constants.FetchState
 import com.vincent.jetmp3.domain.SpotifyDeveloperService
 import com.vincent.jetmp3.domain.SpotifyDeveloperTokenService
 import com.vincent.jetmp3.domain.models.Artist
@@ -30,10 +30,7 @@ class SpotifyManager @Inject constructor(
 	private val spotifyDeveloperTokenService: SpotifyDeveloperTokenService,
 	private val spotifyDeveloperService: SpotifyDeveloperService
 ) {
-	private val _token: MutableStateFlow<SpotifyTokenResponse> =
-		MutableStateFlow(SpotifyTokenResponse())
-	val token: StateFlow<SpotifyTokenResponse>
-		get() = _token
+	private val _token: MutableStateFlow<SpotifyTokenResponse> = MutableStateFlow(SpotifyTokenResponse())
 
 	private val _fetchState = MutableStateFlow(FetchState.LOADING)
 	val fetchState: StateFlow<FetchState>
@@ -56,13 +53,12 @@ class SpotifyManager @Inject constructor(
 		this._fetchState.value = FetchState.LOADING
 
 		while (_token.value.accessToken.isEmpty()) {
-			Log.d("SpotifyManager", "fetchArtistInfo: Token is empty")
+			Log.e("SpotifyManager", "fetchArtistInfo: Token is empty")
 			delay(1000)
 		}
 
 		try {
-			val response =
-				spotifyDeveloperService.fetchArtist(ids, "Bearer ${_token.value.accessToken}")
+			val response = spotifyDeveloperService.fetchArtist(ids, "Bearer ${_token.value.accessToken}")
 			val artist = response.body()
 
 			if (!response.isSuccessful || artist == null) {
@@ -86,12 +82,10 @@ class SpotifyManager @Inject constructor(
 	}
 
 	private suspend fun getToken() {
-		val credentials =
-			"${BuildConfig.SPOTIFY_CLIENT_ID}:${BuildConfig.SPOTIFY_CLIENT_SECRET}"
-		val authHeader =
-			"Basic " + Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
+		val credentials = "${BuildConfig.SPOTIFY_CLIENT_ID}:${BuildConfig.SPOTIFY_CLIENT_SECRET}"
+		val authHeader = "Basic " + Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
 		val response = spotifyDeveloperTokenService.getToken(authorization = authHeader)
-
+		Log.d("SpotifyManager", "getAccessToken: ${response.body()}")
 		val token = response.body()
 		if (!response.isSuccessful || token == null) {
 			_fetchState.value = FetchState.ERROR

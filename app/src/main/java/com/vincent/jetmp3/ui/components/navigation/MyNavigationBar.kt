@@ -1,7 +1,7 @@
 package com.vincent.jetmp3.ui.components.navigation
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,9 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +31,7 @@ import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.utils.NavigationBarItem
 import com.vincent.jetmp3.utils.Screen
+import com.vincent.jetmp3.utils.scaleOnTap
 
 @Composable
 fun MyNavigationBar(
@@ -81,7 +85,7 @@ fun MyNavigationBar(
 				)
 				.background(Color.Transparent)
 		) {
-			items.forEach() { item ->
+			items.forEach { item ->
 				NavBarItem(
 					value = item,
 					selected = currentRoute == item.route,
@@ -105,12 +109,22 @@ fun NavBarItem(
 	selected: Boolean,
 	onClick: () -> Unit
 ) {
+	var isPressed by remember { mutableStateOf(false) }
+	val scale by animateFloatAsState(
+		targetValue = if (isPressed) 0.95f else 1f,
+		label = "scale",
+	)
 
 	Box(
 		modifier = Modifier
 			.clip(RoundedCornerShape(4.dp))
 			.background(Color.Transparent)
-			.clickable { onClick() },
+			.scaleOnTap(
+				scale = scale,
+				onPressStart = { isPressed = true },
+				onPressEnd = { isPressed = false },
+				onTap = onClick
+			),
 		contentAlignment = Alignment.Center,
 	) {
 		Column(

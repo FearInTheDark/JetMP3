@@ -2,13 +2,12 @@ package com.vincent.jetmp3.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vincent.jetmp3.data.enums.FetchState
+import com.vincent.jetmp3.data.constants.FetchState
 import com.vincent.jetmp3.data.modules.SpotifyManager
 import com.vincent.jetmp3.domain.models.Artist
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import okhttp3.ResponseBody
 import javax.inject.Inject
 
 @HiltViewModel

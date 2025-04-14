@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,22 +50,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vincent.jetmp3.R
-import com.vincent.jetmp3.ui.viewmodels.NowPlayingBarViewModel
+import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
+import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import com.vincent.jetmp3.utils.getDominantColorFromResource
 import kotlin.math.abs
 
 @Composable
 fun NowPlayingBar(
-	nowPlayingBarViewModel: NowPlayingBarViewModel = hiltViewModel(),
+	audioViewModel: AudioViewModel = hiltViewModel(),
 	onClick: () -> Unit
 ) {
 	var visible by remember { mutableStateOf(false) }
-	val currentSong by nowPlayingBarViewModel.currentSong.collectAsState()
-	val progress by nowPlayingBarViewModel.progress.collectAsState()
+	val currentSong = audioViewModel.currentSelectedAudio
+	val progress = audioViewModel.progress
 	val context = LocalContext.current
+	var dominantColorResource by remember { mutableStateOf(Color.Gray) }
 
-	val progressFloat = remember(currentSong, progress) {
-		val duration = currentSong?.duration?.takeIf { it > 0 } ?: return@remember 0f
-		(progress.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+
+	LaunchedEffect(Unit) {
+		dominantColorResource = getDominantColorFromResource(context, resourceId = R.drawable.logos__google_bard_icon)
 	}
 
 	LaunchedEffect(Unit) {
@@ -95,15 +97,15 @@ fun NowPlayingBar(
 				.wrapContentSize()
 				.clickable { onClick() }
 				.fillMaxWidth(0.95f)
-				.background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(6.dp))
+				.background(dominantColorResource.copy(0.9f), RoundedCornerShape(6.dp))
 				.padding(6.dp)
 				.pointerInput(Unit) {
 					detectDragGestures { _, dragAmount ->
-						val (x, y) = dragAmount
+						val (_, y) = dragAmount
 						if (y > 0) {
 							if (abs(y) > 10.dp.toPx()) {
 								visible = false
-								nowPlayingBarViewModel.pause()
+								audioViewModel.onUiEvent(UIEvent.PlayPause)
 							}
 						} else if (y < 0) {
 							if (abs(y) > 10.dp.toPx()) {
@@ -116,15 +118,12 @@ fun NowPlayingBar(
 		)
 		{
 			Row(
-				modifier = Modifier
-					.fillMaxWidth(),
-//				.border(1.dp, Color.Blue),
+				modifier = Modifier.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween
 			) {
 				Row(
-					modifier = Modifier
-						.wrapContentSize(),
+					modifier = Modifier.wrapContentSize(),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
@@ -143,7 +142,7 @@ fun NowPlayingBar(
 						modifier = Modifier.widthIn(max = 200.dp)
 					) {
 						Text(
-							text = currentSong?.title ?: "None",
+							text = currentSong?.title ?: "Unknown",
 							fontFamily = FontFamily(Font(R.font.spotifymixui_bold)),
 							color = MaterialTheme.colorScheme.onSurface,
 							fontWeight = FontWeight.Bold,
@@ -154,7 +153,7 @@ fun NowPlayingBar(
 						)
 
 						Text(
-							text = currentSong?.artist ?: "No artist",
+							text = currentSong?.artist ?: "Taylor Swift",
 							fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
 							color = MaterialTheme.colorScheme.onSurface,
 							fontSize = 12.sp
@@ -187,7 +186,8 @@ fun NowPlayingBar(
 			)
 
 			LinearProgressIndicator(
-				progress = { progressFloat },
+				progress = { progress / 100f },
+				drawStopIndicator = {},
 				modifier = Modifier
 					.align(Alignment.BottomCenter)
 					.fillMaxWidth()

@@ -1,6 +1,6 @@
 package com.vincent.jetmp3.ui.screens
 
-import androidx.compose.animation.core.tween
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
@@ -27,28 +27,35 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
+import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
-import com.vincent.jetmp3.ui.viewmodels.MusicViewModel
+import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
+import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import com.vincent.jetmp3.ui.viewmodels.UIState
 import okhttp3.internal.concurrent.formatDuration
 
+@androidx.annotation.OptIn(UnstableApi::class)
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongListScreen(
-	viewModel: MusicViewModel = hiltViewModel(),
+	viewModel: AudioViewModel = hiltViewModel(),
+	onItemClick: () -> Unit
 ) {
-	val audioFiles by viewModel.audioFiles.collectAsState()
-	val refreshing by viewModel.fetching.collectAsState()
+	val audioFiles: List<AudioFile> = viewModel.audioList
+	val refreshing = (viewModel.uiState.value == UIState.Fetching)
+	LocalContext.current
 
 	PullToRefreshBox(
 		isRefreshing = refreshing,
-		onRefresh = { viewModel.fetchAudioFiles() },
+		onRefresh = { viewModel.onUiEvent(UIEvent.FetchAudio) },
 	) {
 		Column(
 			Modifier
@@ -87,11 +94,14 @@ fun SongListScreen(
 				),
 				verticalArrangement = Arrangement.spacedBy(8.dp)
 			) {
-				items(audioFiles) { audioFile ->
+				itemsIndexed(audioFiles) { index, audioFile ->
 					Card(
 						modifier = Modifier
 							.fillMaxWidth()
-							.clickable { viewModel.playSong(audioFile) },
+							.clickable {
+								viewModel.onUiEvent(UIEvent.SelectedAudioChange(index))
+								onItemClick()
+							},
 						shape = RoundedCornerShape(12.dp),
 						colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
 						elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -129,7 +139,7 @@ fun SongListScreen(
 									modifier = Modifier.widthIn(max = 220.dp)
 								) {
 									Text(
-										text = audioFile.title,
+										text = audioFile.displayName,
 										style = MaterialTheme.typography.bodyLarge,
 										color = MaterialTheme.colorScheme.onSurface,
 										maxLines = 1,

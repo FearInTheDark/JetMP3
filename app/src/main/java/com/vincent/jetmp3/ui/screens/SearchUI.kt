@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.vincent.jetmp3.data.enums.FetchState
+import com.vincent.jetmp3.data.constants.FetchState
 import com.vincent.jetmp3.ui.components.search.ArtistDetailScreen
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineMedium

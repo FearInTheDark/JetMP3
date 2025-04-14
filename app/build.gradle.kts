@@ -7,6 +7,7 @@ plugins {
 	alias(libs.plugins.google.ksp)
 	alias(libs.plugins.dagger.hilt)
 	alias(libs.plugins.google.services)
+	id("kotlin-parcelize")
 }
 
 val localProperties = Properties().apply {
@@ -68,9 +69,8 @@ dependencies {
 	implementation(libs.androidx.ui.tooling.preview)
 	implementation(libs.androidx.material3)
 	implementation(libs.androidx.espresso.core)
-	implementation(libs.androidx.datastore)
-	implementation(libs.androidx.datastore.preferences)
 	implementation(libs.androidx.material)
+	implementation(libs.androidx.palette.ktx)
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
@@ -90,8 +90,10 @@ dependencies {
 	implementation(libs.androidx.media3.common)
 	implementation(libs.androidx.media3.ui)
 
-	// Splash Screen
-	implementation(libs.androidx.core.splashscreen)
+
+	// DataStore
+	implementation(libs.androidx.datastore)
+	implementation(libs.androidx.datastore.preferences)
 
 	// Firebase
 //	implementation(platform(libs.firebase.bom))
@@ -106,7 +108,16 @@ dependencies {
 	ksp(libs.hilt.android.compiler)
 	ksp(libs.androidx.hilt.compiler)
 
+	// Media 3 x ExoPlayer
+	implementation(libs.glide)
+	implementation(libs.androidx.legacy.support.v4)
+	implementation(libs.androidx.media3.datasource.okhttp)
+
 	// Retrofit
 	implementation(libs.retrofit)
 	implementation(libs.converter.gson)
+
+	// Splash Screen
+	implementation(libs.androidx.core.splashscreen)
+
 }
