@@ -120,4 +120,7 @@ dependencies {
 	// Splash Screen
 	implementation(libs.androidx.core.splashscreen)
 
+	// Cloudinary
+	implementation(libs.cloudinary.android)
+
 }

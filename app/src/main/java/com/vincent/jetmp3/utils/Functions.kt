@@ -3,6 +3,7 @@ package com.vincent.jetmp3.utils
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -58,22 +59,27 @@ suspend fun getDominantColorFromUrl(
 	defaultColor: Color = Color.Gray
 ): Color {
 	return withContext(Dispatchers.IO) {
-		val imageLoader = ImageLoader(context)
-		val request = ImageRequest.Builder(context)
-			.data(imageUrl)
-			.allowHardware(false)
-			.build()
+		try {
+			val imageLoader = ImageLoader(context)
+			val request = ImageRequest.Builder(context)
+				.data(imageUrl)
+				.allowHardware(false) // Important for Palette to work correctly
+				.build()
 
-		val result = imageLoader.execute(request)
-		val drawable = (result as? SuccessResult)?.drawable
+			val result = imageLoader.execute(request)
+			val drawable = (result as? SuccessResult)?.drawable
+			val bitmap = (drawable as? BitmapDrawable)?.bitmap
 
-		val bitmap = (drawable as? BitmapDrawable)?.bitmap
-
-		if (bitmap != null) {
-			val palette = Palette.from(bitmap).generate()
-			val dominant = palette.getDominantColor(defaultColor.toArgb())
-			Color(dominant)
-		} else {
+			if (bitmap != null) {
+				val palette = Palette.from(bitmap).generate()
+				val dominant = palette.getDominantColor(defaultColor.toArgb())
+				Log.d("TAG", "Dominant color: ${Color(dominant)}")
+				Color(dominant)
+			} else {
+				defaultColor
+			}
+		} catch (e: Exception) {
+			Log.e("TAG", "Error getting dominant color", e)
 			defaultColor
 		}
 	}

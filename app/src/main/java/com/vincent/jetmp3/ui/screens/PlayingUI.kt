@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,7 +56,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -66,6 +71,9 @@ import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import com.vincent.jetmp3.utils.getDominantColorFromUrl
+import com.vincent.jetmp3.utils.mixColors
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -81,6 +89,8 @@ fun PlayingScreen(
 	val progressString = viewModel.progressString
 	var sliderProgress by remember { mutableFloatStateOf(0f) }
 	var isUserSeeking by remember { mutableStateOf(false) }
+	val context = LocalContext.current
+	var ambientColor by remember { mutableStateOf(Color.Black) }
 
 	val standardBottomSheet = rememberStandardBottomSheetState(
 		initialValue = SheetValue.Hidden,
@@ -92,6 +102,10 @@ fun PlayingScreen(
 	val scope = rememberCoroutineScope()
 
 	val animProgress = remember { Animatable(0f) }
+
+	LaunchedEffect(Unit) {
+		ambientColor = getDominantColorFromUrl(context, "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf")
+	}
 
 	LaunchedEffect(progress) {
 		animProgress.animateTo(progress, animationSpec = tween(500))
@@ -179,11 +193,17 @@ fun PlayingScreen(
 							horizontalAlignment = Alignment.CenterHorizontally
 						) {
 							AsyncImage(
-								model = "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf",
+								model = "https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd",
 								contentDescription = "Image",
 								contentScale = ContentScale.Crop,
 								modifier = Modifier
 									.scale(if (isPlaying) albumScale else 1f)
+									.shadow(
+										elevation = 20.dp,
+										clip = false,
+										shape = RoundedCornerShape(10.dp),
+										ambientColor = mixColors(arrayOf(ambientColor to 1f, MaterialTheme.colorScheme.surface to 1f))
+									)
 									.clip(RoundedCornerShape(10.dp))
 									.fillMaxWidth(0.95f)
 									.aspectRatio(1f)
@@ -213,8 +233,7 @@ fun PlayingScreen(
 							) {
 								Column(
 									modifier = Modifier
-										.fillMaxWidth(0.7f)
-										.wrapContentSize()
+										.fillMaxWidth(0.75f)
 										.padding(2.dp),
 									verticalArrangement = Arrangement.Center,
 									horizontalAlignment = Alignment.Start
@@ -243,7 +262,8 @@ fun PlayingScreen(
 									Text(
 										text = progress.toString(),
 										style = MaterialTheme.typography.labelMedium,
-										color = MaterialTheme.colorScheme.onSurface
+										color = MaterialTheme.colorScheme.onSurface,
+										softWrap = false
 									)
 									Text(
 										text = bottomSheetScaffoldState.bottomSheetState.currentValue.toString(),

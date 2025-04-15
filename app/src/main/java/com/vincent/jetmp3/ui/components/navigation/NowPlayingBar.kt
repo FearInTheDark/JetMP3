@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.ui.components.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -32,12 +33,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -52,31 +55,34 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import com.vincent.jetmp3.ui.viewmodels.UIState
 import com.vincent.jetmp3.utils.getDominantColorFromResource
+import com.vincent.jetmp3.utils.getDominantColorFromUrl
 import kotlin.math.abs
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun NowPlayingBar(
 	audioViewModel: AudioViewModel = hiltViewModel(),
 	onClick: () -> Unit
 ) {
-	var visible by remember { mutableStateOf(false) }
+	val uiState by audioViewModel.uiState.collectAsState()
 	val currentSong = audioViewModel.currentSelectedAudio
 	val progress = audioViewModel.progress
 	val context = LocalContext.current
 	var dominantColorResource by remember { mutableStateOf(Color.Gray) }
-
-
-	LaunchedEffect(Unit) {
-		dominantColorResource = getDominantColorFromResource(context, resourceId = R.drawable.logos__google_bard_icon)
+	var barVisible by remember(uiState) {
+		mutableStateOf(uiState is UIState.Playing || uiState is UIState.Pausing)
 	}
 
 	LaunchedEffect(Unit) {
-		visible = true
+//		dominantColorResource = getDominantColorFromResource(context, resourceId = R.drawable.logos__google_bard_icon)
+		dominantColorResource = getDominantColorFromUrl(context, imageUrl = "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf")
 	}
+
 
 	AnimatedVisibility(
-		visible = visible,
+		visible = barVisible,
 		enter = slideInVertically(
 			initialOffsetY = { fullHeight -> fullHeight },
 			animationSpec = tween(500),
@@ -104,8 +110,7 @@ fun NowPlayingBar(
 						val (_, y) = dragAmount
 						if (y > 0) {
 							if (abs(y) > 10.dp.toPx()) {
-								visible = false
-								audioViewModel.onUiEvent(UIEvent.PlayPause)
+								barVisible = false
 							}
 						} else if (y < 0) {
 							if (abs(y) > 10.dp.toPx()) {
@@ -153,7 +158,8 @@ fun NowPlayingBar(
 						)
 
 						Text(
-							text = currentSong?.artist ?: "Taylor Swift",
+//							text = currentSong?.artist ?: "Taylor Swift",
+							text = audioViewModel.uiState.value.javaClass.name,
 							fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
 							color = MaterialTheme.colorScheme.onSurface,
 							fontSize = 12.sp
