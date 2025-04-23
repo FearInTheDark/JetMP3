@@ -1,41 +1,58 @@
 package com.vincent.jetmp3.ui.viewmodels
 
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
+import android.util.Log
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
-import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.data.repositories.AudioRepository
-import com.vincent.jetmp3.media.service.AudioEvent
-import com.vincent.jetmp3.media.service.AudioState
+import com.vincent.jetmp3.domain.ImagePaletteService
+import com.vincent.jetmp3.domain.models.Track
+import com.vincent.jetmp3.domain.models.request.VibrantRequest
+import com.vincent.jetmp3.media.service.PlayerEvent
+import com.vincent.jetmp3.media.service.PlayerState
 import com.vincent.jetmp3.media.service.MediaServiceHandler
+import com.vincent.jetmp3.utils.paletteToColor
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(SavedStateHandleSaveableApi::class)
 @HiltViewModel
 class AudioViewModel @Inject constructor(
-	private val mediaServiceHandler: MediaServiceHandler, private val repository: AudioRepository, savedStateHandle: SavedStateHandle
+	private val mediaServiceHandler: MediaServiceHandler,
+	private val repository: AudioRepository,
+	private val imagePaletteService: ImagePaletteService,
 ) : ViewModel() {
-	private var duration by savedStateHandle.saveable { mutableLongStateOf(0L) }
-	var progress by savedStateHandle.saveable { mutableFloatStateOf(0f) }
-	var progressString by savedStateHandle.saveable { mutableStateOf("00:00") }
-	var isPlaying by savedStateHandle.saveable { mutableStateOf(false) }
-	var currentSelectedAudio by savedStateHandle.saveable { mutableStateOf<AudioFile?>(null) }
-	var audioList by savedStateHandle.saveable { mutableStateOf(listOf<AudioFile>()) }
+	private val _duration = MutableStateFlow(0L)
 
-	private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Initial)
-	val uiState = _uiState.asStateFlow()
+	private val _progress = MutableStateFlow(0f)
+	val progress: StateFlow<Float> get() = _progress.asStateFlow()
+
+	private val _progressString = MutableStateFlow("00:00")
+	val progressString: StateFlow<String> get() = _progressString.asStateFlow()
+
+	private val _isPlaying = MutableStateFlow(false)
+	val isPlaying: StateFlow<Boolean> get() = _isPlaying.asStateFlow()
+
+	private val _currentSelectedAudio = MutableStateFlow<AudioFile?>(null)
+	val currentSelectedAudio: StateFlow<AudioFile?> get() = _currentSelectedAudio.asStateFlow()
+
+	private val _localAudioList = MutableStateFlow<List<AudioFile>>(emptyList())
+	val localAudioList: StateFlow<List<AudioFile>> get() = _localAudioList.asStateFlow()
+
+	private val _cloudTracks = MutableStateFlow<List<Track>?>(emptyList())
+	val cloudTracks: StateFlow<List<Track>?> get() = _cloudTracks.asStateFlow()
+
+	private val _uiState = MutableStateFlow<UIState>(UIState.Initial)
+	val uiState: StateFlow<UIState> get() = _uiState.asStateFlow()
 
 	init {
 		getAudioData()
@@ -43,23 +60,26 @@ class AudioViewModel @Inject constructor(
 
 	init {
 		viewModelScope.launch {
-			mediaServiceHandler.audioState.collectLatest { mediaState ->
+			mediaServiceHandler.playerState.collectLatest { mediaState ->
 				when (mediaState) {
-					AudioState.Initial -> _uiState.value = UIState.Initial
-					is AudioState.Buffering -> calculateProgressValue(mediaState.progress)
-					is AudioState.Playing -> {
-						isPlaying = mediaState.isPlaying
-						_uiState.value = if (isPlaying) UIState.Playing else UIState.Pausing
-					}
-					is AudioState.Progress -> calculateProgressValue(mediaState.progress)
-					is AudioState.CurrentPlaying -> {
-						currentSelectedAudio = audioList[mediaState.mediaItemIndex]
+					PlayerState.Initial -> _uiState.value = UIState.Initial
+					is PlayerState.Buffering -> calculateProgressValue(mediaState.progress)
+					is PlayerState.Playing -> {
+						_isPlaying.value = mediaState.isPlaying
+						_uiState.value = if (isPlaying.value) UIState.Playing else UIState.Pausing
 					}
 
-					is AudioState.Ready -> {
-						duration = mediaState.duration
+					is PlayerState.Progress -> calculateProgressValue(mediaState.progress)
+					is PlayerState.CurrentPlaying -> {
+						_currentSelectedAudio.value = _localAudioList.value[mediaState.mediaItemIndex]
+					}
+
+					is PlayerState.Ready -> {
+						_duration.value = mediaState.duration
 						_uiState.value = UIState.Ready
 					}
+
+					else -> {}
 				}
 			}
 		}
@@ -67,43 +87,43 @@ class AudioViewModel @Inject constructor(
 
 	fun onUiEvent(uiEvent: UIEvent) = viewModelScope.launch {
 		when (uiEvent) {
-			UIEvent.Forward -> mediaServiceHandler.onPlayerEvents(AudioEvent.Forward)
-			UIEvent.Backward -> mediaServiceHandler.onPlayerEvents(AudioEvent.Backward)
-			UIEvent.SeekToNext -> mediaServiceHandler.onPlayerEvents(AudioEvent.SeekToNext)
-			UIEvent.SeekToPrevious -> mediaServiceHandler.onPlayerEvents(AudioEvent.SeekToPrevious)
-			is UIEvent.PlayPause -> mediaServiceHandler.onPlayerEvents(AudioEvent.PlayPause)
+			UIEvent.Forward -> mediaServiceHandler.onPlayerEvents(PlayerEvent.Forward)
+			UIEvent.Backward -> mediaServiceHandler.onPlayerEvents(PlayerEvent.Backward)
+			UIEvent.SeekToNext -> mediaServiceHandler.onPlayerEvents(PlayerEvent.SeekToNext)
+			UIEvent.SeekToPrevious -> mediaServiceHandler.onPlayerEvents(PlayerEvent.SeekToPrevious)
+			UIEvent.PlayPause -> mediaServiceHandler.onPlayerEvents(PlayerEvent.PlayPause)
 			is UIEvent.SelectedAudioChange -> mediaServiceHandler.onPlayerEvents(
-				AudioEvent.SelectedAudioChange, selectedAudioIndex = uiEvent.index
+				PlayerEvent.SelectedPlayerChange, selectedAudioIndex = uiEvent.index
 			)
 
 			is UIEvent.SeekTo -> mediaServiceHandler.onPlayerEvents(
-				audioEvent = AudioEvent.SeekTo,
-				seekPosition = ((duration * uiEvent.position) / 100f).toLong()
+				playerEvent = PlayerEvent.SeekTo,
+				seekPosition = ((_duration.value * uiEvent.position) / 100f).toLong()
 			)
 
 			is UIEvent.UpdateProgress -> {
 				mediaServiceHandler.onPlayerEvents(
-					AudioEvent.UpdateProgress(uiEvent.progress)
+					PlayerEvent.UpdateProgress(uiEvent.progress)
 				)
-				progress = uiEvent.progress
+				_progress.value = uiEvent.progress
 			}
 
-			is UIEvent.FetchAudio -> getAudioData()
+			UIEvent.FetchAudio -> getAudioData()
 		}
 	}
 
 	private fun getAudioData() {
 		_uiState.value = UIState.Fetching
 		viewModelScope.launch {
-			val audio = repository.getAudioData()
-			audioList = audio
+			_localAudioList.value = repository.getLocalAudioData()
+			_cloudTracks.value = repository.getNestAudioData()
 			setMediaItems()
 			_uiState.value = UIState.Ready
 		}
 	}
 
 	private fun setMediaItems() {
-		audioList.map { audio ->
+		_localAudioList.value.map { audio ->
 			MediaItem.Builder().setUri(audio.uri).setMediaMetadata(
 				MediaMetadata.Builder()
 					.setAlbumArtist(audio.artist)
@@ -116,12 +136,29 @@ class AudioViewModel @Inject constructor(
 	}
 
 	override fun onCleared() {
-		viewModelScope.launch { mediaServiceHandler.onPlayerEvents(AudioEvent.Stop) }
+		viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.Stop) }
 		super.onCleared()
 	}
 
+	suspend fun getDominantColor(imageUrl: String? = null): Color {
+		val selectedAudio = _currentSelectedAudio.value ?: return Color.Gray
+
+		try {
+			val rgb = viewModelScope.async {
+				delay(300)
+				imagePaletteService.getPalette(VibrantRequest(imageUrl ?: selectedAudio.imageSource))
+			}.await().muted
+			Log.d("TAG", "getDominantColor: $rgb")
+			return paletteToColor(rgb)
+		} catch (e: Exception) {
+			Log.e("TAG", "getDominantColor: ${e.message}")
+			return Color.Gray
+		}
+
+	}
+
 	private fun calculateProgressValue(currentProgress: Long) {
-		progress = if (currentProgress > 0) ((currentProgress.toFloat()) / duration.toFloat()) * 100f else 0f
+		_progress.value = if (currentProgress > 0) ((currentProgress.toFloat()) / _duration.value.toFloat()) * 100f else 0f
 		progressString
 	}
 }

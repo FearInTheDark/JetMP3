@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -172,7 +171,7 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				)
 			}
 		) {
-			AuthScreen(navController = navController, onLogin = { navController.navigate("home") })
+			AuthScreen(navController = navController, onValidated = { navController.navigate(Screen.Home.route) })
 		}
 		composable(
 			route = Screen.Home.route,
@@ -212,7 +211,7 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 						durationMillis = 1000,
 						delayMillis = 10
 					)
-				) +  slideOutOfContainer(
+				) + slideOutOfContainer(
 					towards = AnimatedContentTransitionScope.SlideDirection.Down,
 					animationSpec = tween(
 						durationMillis = 300,

@@ -7,3 +7,4 @@ import androidx.datastore.preferences.preferencesDataStore
 
 val Context.playbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "playback_state")
 val Context.apiTokenDataStore: DataStore<Preferences> by preferencesDataStore(name = "api_token")
+val Context.authToken: DataStore<Preferences> by preferencesDataStore(name = "auth_token")

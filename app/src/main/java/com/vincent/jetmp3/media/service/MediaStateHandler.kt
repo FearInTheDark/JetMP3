@@ -1,13 +1,11 @@
 package com.vincent.jetmp3.media.service
 
-import androidx.lifecycle.viewModelScope
 import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.data.repositories.AudioRepository
 import com.vincent.jetmp3.ui.viewmodels.UIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,7 +44,7 @@ class MediaStateHandler @Inject constructor(
 
 		// coroutine
 		withContext(Dispatchers.IO) {
-			val audioFiles = audioRepository.getAudioData()
+			val audioFiles = audioRepository.getLocalAudioData()
 			_audioList.value = audioFiles
 			_uiState.value = UIState.Ready
 		}

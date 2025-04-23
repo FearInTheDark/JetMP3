@@ -3,6 +3,7 @@ package com.vincent.jetmp3.utils
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
@@ -19,8 +20,12 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.vincent.jetmp3.data.models.AudioFile
+import com.vincent.jetmp3.domain.models.PaletteColor
+import com.vincent.jetmp3.domain.models.response.TokenResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.util.Date
 
 fun AudioFile.toMediaItem(): MediaItem {
 	return MediaItem.Builder()
@@ -37,6 +42,26 @@ fun AudioFile.toMediaItem(): MediaItem {
 				.build()
 		)
 		.build()
+}
+
+fun decodeJwt(token: String): TokenResponse? {
+	return try {
+		val parts = token.split(".")
+		if (parts.size != 3) return null
+
+		val payload = String(Base64.decode(parts[1], Base64.URL_SAFE))
+		val json = JSONObject(payload)
+
+		val userId = json.getInt("userId")
+		val email = json.getString("email")
+		val issuedAt = Date(json.getLong("iat") * 1000)
+		val expiresAt = Date(json.getLong("exp") * 1000)
+
+		TokenResponse(userId, email, issuedAt, expiresAt)
+	} catch (e: Exception) {
+		e.printStackTrace()
+		null
+	}
 }
 
 suspend fun getDominantColorFromResource(
@@ -93,7 +118,7 @@ fun mixColors(colors: Array<Pair<Color, Float>>): Color {
 	var a = 0f
 	var totalWeight = 0f
 
-	colors.forEach { (color, weight ) ->
+	colors.forEach { (color, weight) ->
 		r += color.red * weight
 		g += color.green * weight
 		b += color.blue * weight
@@ -126,3 +151,10 @@ fun Modifier.scaleOnTap(
 		)
 	}
 
+fun paletteToColor(paletteColor: PaletteColor): Color {
+	require(paletteColor.rgb.size == 3) {
+		"PaletteColor must have exactly 3 RGB values"
+	}
+
+	return Color(paletteColor.rgb[0].toInt(), paletteColor.rgb[1].toInt(), paletteColor.rgb[2].toInt())
+}

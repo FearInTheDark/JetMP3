@@ -3,6 +3,7 @@ package com.vincent.jetmp3.media.service
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.vincent.jetmp3.utils.PlaybackState
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -13,12 +14,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class MediaServiceHandler @Inject constructor(
 	private val exoPlayer: ExoPlayer
 ) : Player.Listener {
-	private val _audioState: MutableStateFlow<AudioState> = MutableStateFlow(AudioState.Initial)
-	val audioState: StateFlow<AudioState> = _audioState.asStateFlow()
+	private val _playerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Initial)
+	val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
+
+	private val _playbackState : MutableStateFlow<PlaybackState> = MutableStateFlow(PlaybackState())
+	val playbackState = _playbackState.asStateFlow()
+
 
 	private var job: Job? = null
 
@@ -37,49 +44,52 @@ class MediaServiceHandler @Inject constructor(
 	}
 
 	suspend fun onPlayerEvents(
-		audioEvent: AudioEvent,
+		playerEvent: PlayerEvent,
 		selectedAudioIndex: Int = -1,
 		seekPosition: Long = 0
 	) {
-		when (audioEvent) {
-			AudioEvent.Backward -> exoPlayer.seekBack()
-			AudioEvent.Forward -> exoPlayer.seekForward()
-			AudioEvent.SeekToNext -> exoPlayer.seekToNext()
-			AudioEvent.SeekToPrevious -> exoPlayer.seekToPrevious()
-			AudioEvent.PlayPause -> playOrPause()
-			is AudioEvent.SeekTo -> exoPlayer.seekTo(seekPosition)
-			is AudioEvent.SelectedAudioChange -> {
+		when (playerEvent) {
+			PlayerEvent.Backward -> exoPlayer.seekBack()
+			PlayerEvent.Forward -> exoPlayer.seekForward()
+			PlayerEvent.SeekToNext -> exoPlayer.seekToNext()
+			PlayerEvent.SeekToPrevious -> exoPlayer.seekToPrevious()
+			PlayerEvent.PlayPause -> playOrPause()
+			is PlayerEvent.SeekTo -> exoPlayer.seekTo(seekPosition)
+			is PlayerEvent.SelectedPlayerChange -> {
 				when (selectedAudioIndex) {
 					exoPlayer.currentMediaItemIndex -> playOrPause()
 					else -> {
 						exoPlayer.seekToDefaultPosition(selectedAudioIndex)
-						_audioState.value = AudioState.Playing(true)
+						_playerState.value = PlayerState.Playing(true)
 						exoPlayer.playWhenReady = true
 						startProgressUpdate()
 					}
 				}
 			}
-			is AudioEvent.UpdateProgress -> {
+
+			is PlayerEvent.UpdateProgress -> {
 				exoPlayer.seekTo(
-					(exoPlayer.duration * audioEvent.newProgress).toLong()
+					(exoPlayer.duration * playerEvent.newProgress).toLong()
 				)
 			}
-			AudioEvent.Stop -> stopProgressUpdate()
+
+			PlayerEvent.Stop -> stopProgressUpdate()
 		}
 	}
 
 	override fun onPlaybackStateChanged(playbackState: Int) {
 		when (playbackState) {
-			ExoPlayer.STATE_BUFFERING -> _audioState.value = AudioState.Buffering(exoPlayer.currentPosition)
-			ExoPlayer.STATE_READY -> _audioState.value = AudioState.Ready(exoPlayer.duration)
-			else -> {}
+			ExoPlayer.STATE_BUFFERING -> _playerState.value = PlayerState.Buffering(exoPlayer.currentPosition)
+			ExoPlayer.STATE_READY -> _playerState.value = PlayerState.Ready(exoPlayer.duration)
+			ExoPlayer.STATE_ENDED -> _playerState.value = PlayerState.Ended
+			else -> _playerState.value = PlayerState.Idle
 		}
 	}
 
 	@OptIn(DelicateCoroutinesApi::class)
 	override fun onIsPlayingChanged(isPlaying: Boolean) {
-		_audioState.value = AudioState.Playing(isPlaying = isPlaying)
-		_audioState.value = AudioState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
+		_playerState.value = PlayerState.Playing(isPlaying = isPlaying)
+		_playerState.value = PlayerState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
 		if (isPlaying) {
 			GlobalScope.launch(Dispatchers.Main) {
 				startProgressUpdate()
@@ -95,7 +105,7 @@ class MediaServiceHandler @Inject constructor(
 			stopProgressUpdate()
 		} else {
 			exoPlayer.play()
-			_audioState.value = AudioState.Playing(
+			_playerState.value = PlayerState.Playing(
 				isPlaying = true
 			)
 			startProgressUpdate()
@@ -105,35 +115,37 @@ class MediaServiceHandler @Inject constructor(
 	private suspend fun startProgressUpdate() = job.run {
 		while (true) {
 			delay(500)
-			_audioState.value = AudioState.Progress(exoPlayer.currentPosition)
+			_playerState.value = PlayerState.Progress(exoPlayer.currentPosition)
 		}
 	}
 
 	private fun stopProgressUpdate() {
 		job?.cancel()
-		_audioState.value = AudioState.Playing(
+		_playerState.value = PlayerState.Playing(
 			isPlaying = false
 		)
 	}
 }
 
-sealed class AudioEvent {
-	data object Stop : AudioEvent()
-	data object SeekTo : AudioEvent()
-	data object Forward : AudioEvent()
-	data object Backward : AudioEvent()
-	data object PlayPause : AudioEvent()
-	data object SeekToNext : AudioEvent()
-	data object SeekToPrevious : AudioEvent()
-	data object SelectedAudioChange : AudioEvent()
-	data class UpdateProgress(val newProgress: Float) : AudioEvent()
+sealed class PlayerEvent {
+	data object Stop : PlayerEvent()
+	data object SeekTo : PlayerEvent()
+	data object Forward : PlayerEvent()
+	data object Backward : PlayerEvent()
+	data object PlayPause : PlayerEvent()
+	data object SeekToNext : PlayerEvent()
+	data object SeekToPrevious : PlayerEvent()
+	data object SelectedPlayerChange : PlayerEvent()
+	data class UpdateProgress(val newProgress: Float) : PlayerEvent()
 }
 
-sealed class AudioState {
-	data object Initial : AudioState()
-	data class Ready(val duration: Long) : AudioState()
-	data class Progress(val progress: Long) : AudioState()
-	data class Buffering(val progress: Long) : AudioState()
-	data class Playing(val isPlaying: Boolean) : AudioState()
-	data class CurrentPlaying(val mediaItemIndex: Int) : AudioState()
+sealed class PlayerState {
+	data object Initial : PlayerState()
+	data object Ended : PlayerState()
+	data object Idle : PlayerState()
+	data class Ready(val duration: Long) : PlayerState()
+	data class Progress(val progress: Long) : PlayerState()
+	data class Buffering(val progress: Long) : PlayerState()
+	data class Playing(val isPlaying: Boolean) : PlayerState()
+	data class CurrentPlaying(val mediaItemIndex: Int) : PlayerState()
 }

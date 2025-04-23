@@ -20,6 +20,14 @@ val HeadLineMedium = TextStyle(
 	letterSpacing = (-0.5).sp,
 )
 
+val TitleLineLarge = TextStyle(
+	fontFamily = SpotifyMixUI,
+	fontWeight = FontWeight.Bold,
+	fontSize = 16.sp,
+	lineHeight = 24.sp,
+	letterSpacing = 0.5.sp,
+)
+
 val LabelLineMedium = TextStyle(
 	fontFamily = SpotifyMixUI,
 	fontWeight = FontWeight.Normal,

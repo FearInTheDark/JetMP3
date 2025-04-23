@@ -1,6 +1,6 @@
 package com.vincent.jetmp3.utils
 
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.media3.common.MediaItem
 
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
@@ -18,4 +18,16 @@ data class NavigationBarItem(
     val title: String,
     val icon: Int,
     val activeIcon: Int,
+)
+
+data class PlaybackState (
+    val isPlaying: Boolean = false,
+    val currentIndex: Int = 0,
+    val currentPosition: Long = 0L,
+    val duration: Long = 0L,
+    val bufferedPosition: Long = 0L,
+    val trackList: List<MediaItem> = emptyList(),
+    val currentTrack: MediaItem? = null,
+    val isBuffering: Boolean = false,
+    val hasEnded: Boolean = false
 )

@@ -1,30 +1,24 @@
 package com.vincent.jetmp3.ui.viewmodels
 
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cloudinary.utils.ObjectUtils
-import com.vincent.jetmp3.R
-import com.vincent.jetmp3.core.config.CloudinaryConfig
-import com.vincent.jetmp3.domain.ApiService
-import com.vincent.jetmp3.domain.models.Post
+import com.vincent.jetmp3.domain.ImagePaletteService
+import com.vincent.jetmp3.domain.models.request.VibrantRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
-	private val apiService: ApiService
+	private val imagePaletteService: ImagePaletteService
 ) : ViewModel() {
 
-	fun uploadResource() {
+	fun getPalette() {
 		viewModelScope.launch {
-			CloudinaryConfig.uploadImage(File("/storage/emulated/0/Download/spider.jpg")
-				// File path
-//				"https://fastly.picsum.photos/id/372/536/354.jpg?hmac=WzFt75PCZZoYQOknk5yWvMfGg9HW94Z7GcOX6lRxAUQ"
-			)
+			val palette = imagePaletteService
+				.getPalette(VibrantRequest("https://res.cloudinary.com/dsy29z79v/image/upload/v1744611492/cld-sample-3.jpg"))
+			Log.d("Palette", "Palette: $palette")
 		}
 	}
 

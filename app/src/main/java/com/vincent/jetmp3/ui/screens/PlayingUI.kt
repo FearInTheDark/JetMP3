@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.ui.screens
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -10,8 +11,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +32,7 @@ import androidx.compose.material.Slider
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,10 +42,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,23 +60,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.vincent.jetmp3.R
+import com.vincent.jetmp3.ui.theme.DarkSurface
 import com.vincent.jetmp3.ui.theme.HeadLineMedium
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.UIEvent
-import com.vincent.jetmp3.utils.getDominantColorFromUrl
 import com.vincent.jetmp3.utils.mixColors
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -83,14 +85,14 @@ fun PlayingScreen(
 	onTopAppClick: () -> Unit = {}
 ) {
 
-	val currentSong = viewModel.currentSelectedAudio
-	val isPlaying = viewModel.isPlaying
-	val progress = viewModel.progress
-	val progressString = viewModel.progressString
+	val currentSong by viewModel.currentSelectedAudio.collectAsState()
+	val isPlaying by viewModel.isPlaying.collectAsState()
+	val progress by viewModel.progress.collectAsState()
+	val progressString by viewModel.progressString.collectAsState()
 	var sliderProgress by remember { mutableFloatStateOf(0f) }
 	var isUserSeeking by remember { mutableStateOf(false) }
-	val context = LocalContext.current
-	var ambientColor by remember { mutableStateOf(Color.Black) }
+	val isSystemInDarkTheme = isSystemInDarkTheme()
+	var ambientColor by remember { mutableStateOf(Color.Gray) }
 
 	val standardBottomSheet = rememberStandardBottomSheetState(
 		initialValue = SheetValue.Hidden,
@@ -103,8 +105,25 @@ fun PlayingScreen(
 
 	val animProgress = remember { Animatable(0f) }
 
-	LaunchedEffect(Unit) {
-		ambientColor = getDominantColorFromUrl(context, "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf")
+	val animatedColor by animateColorAsState(
+		targetValue = ambientColor,
+		animationSpec = tween(durationMillis = 1000),
+		label = "PlayingUI animated"
+	)
+
+	val containerColor by remember(ambientColor, animatedColor) {
+		derivedStateOf {
+			mixColors(
+				arrayOf(
+					(if (isSystemInDarkTheme) DarkSurface else Color.White) to 0.3f,
+					animatedColor to 0.7f
+				)
+			)
+		}
+	}
+
+	LaunchedEffect(currentSong) {
+		ambientColor = viewModel.getDominantColor()
 	}
 
 	LaunchedEffect(progress) {
@@ -140,39 +159,62 @@ fun PlayingScreen(
 			}
 		},
 		topBar = {
-			TopAppBar(
-				title = {
-					Text(
-						text = "Playing View",
-						style = HeadStyleLarge,
-						color = MaterialTheme.colorScheme.onSurface
-					)
-				},
-				navigationIcon = {
-					IconButton(
-						onClick = { onTopAppClick() }
-					) {
-						Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-					}
-				},
-				actions = {
-					IconButton(
-						onClick = {}
-					) {
-						Icon(
-							Icons.Outlined.MoreVert,
-							null,
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(
+						Brush.verticalGradient(
+							colors = listOf(
+								mixColors(arrayOf(containerColor to 0.9f, MaterialTheme.colorScheme.surface to 0.1f)),
+								mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.2f)),
+							)
 						)
-					}
-				},
-			)
+					)
+			) {
+				TopAppBar(
+					title = {
+						Text(
+							text = "Playing View",
+							style = HeadStyleLarge,
+							color = MaterialTheme.colorScheme.onSurface
+						)
+					},
+					navigationIcon = {
+						IconButton(onClick = { onTopAppClick() }) {
+							// Chevron down
+							Icon(Icons.Outlined.KeyboardArrowDown, null)
+						}
+					},
+					actions = {
+						IconButton(onClick = {}) {
+							Icon(Icons.Outlined.MoreVert, null)
+						}
+					},
+					colors = TopAppBarColors(
+						containerColor = Color.Transparent, // Make the TopAppBar background transparent
+						scrolledContainerColor = Color.Transparent,
+						navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+						titleContentColor = MaterialTheme.colorScheme.onSurface,
+						actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+					)
+				)
+			}
 		},
 		sheetPeekHeight = 36.dp,
-		containerColor = MaterialTheme.colorScheme.surface,
 		content = @Composable { innerPadding ->
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
+					.background(
+						Brush.verticalGradient(
+							startY = 0f,
+							endY = Float.POSITIVE_INFINITY,
+							colors = listOf(
+								mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.2f)),
+								mixColors(arrayOf(containerColor to 0.2f, MaterialTheme.colorScheme.surface to 0.8f))
+							)
+						)
+					)
 					.padding(innerPadding),
 				horizontalAlignment = Alignment.CenterHorizontally,
 				verticalArrangement = Arrangement.Top
@@ -199,10 +241,11 @@ fun PlayingScreen(
 								modifier = Modifier
 									.scale(if (isPlaying) albumScale else 1f)
 									.shadow(
-										elevation = 20.dp,
+										elevation = 100.dp,
 										clip = false,
 										shape = RoundedCornerShape(10.dp),
-										ambientColor = mixColors(arrayOf(ambientColor to 1f, MaterialTheme.colorScheme.surface to 1f))
+										ambientColor = animatedColor,
+										spotColor = animatedColor
 									)
 									.clip(RoundedCornerShape(10.dp))
 									.fillMaxWidth(0.95f)
@@ -239,14 +282,14 @@ fun PlayingScreen(
 									horizontalAlignment = Alignment.Start
 								) {
 									Text(
-										text = currentSong.title,
+										text = currentSong!!.title,
 										style = HeadLineMedium,
 										color = MaterialTheme.colorScheme.onSurface,
 										modifier = Modifier.basicMarquee()
 									)
 
 									Text(
-										text = currentSong.artist,
+										text = currentSong!!.artist,
 										style = MaterialTheme.typography.labelMedium,
 										color = MaterialTheme.colorScheme.onSurface
 									)

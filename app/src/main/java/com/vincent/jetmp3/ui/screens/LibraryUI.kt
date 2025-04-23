@@ -69,7 +69,7 @@ fun LibraryScreen(libraryViewModel: LibraryViewModel = hiltViewModel()) {
 		Spacer(Modifier.height(24.dp))
 
 		ElevatedButton(
-			onClick = { libraryViewModel.uploadResource() },
+			onClick = { libraryViewModel.getPalette() },
 			shape = RoundedCornerShape(10.dp),
 			elevation = ButtonDefaults.buttonElevation(10.dp),
 			colors = ButtonDefaults.buttonColors(

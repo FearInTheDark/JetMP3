@@ -17,11 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.vincent.jetmp3.domain.models.Artist
+import com.vincent.jetmp3.domain.models.SpotifyArtist
 import com.vincent.jetmp3.ui.theme.LabelLineMedium
 
 @Composable
-fun ArtistDetailScreen(artist: Artist?) {
+fun ArtistDetailScreen(artist: SpotifyArtist?) {
 	Column(
 		modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
 	) {

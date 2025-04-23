@@ -2,6 +2,7 @@ package com.vincent.jetmp3.ui.components.navigation
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,10 +41,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -52,12 +56,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
-import com.vincent.jetmp3.ui.viewmodels.UIEvent
 import com.vincent.jetmp3.ui.viewmodels.UIState
-import com.vincent.jetmp3.utils.getDominantColorFromResource
-import com.vincent.jetmp3.utils.getDominantColorFromUrl
+import com.vincent.jetmp3.utils.mixColors
 import kotlin.math.abs
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -67,19 +70,22 @@ fun NowPlayingBar(
 	onClick: () -> Unit
 ) {
 	val uiState by audioViewModel.uiState.collectAsState()
-	val currentSong = audioViewModel.currentSelectedAudio
-	val progress = audioViewModel.progress
-	val context = LocalContext.current
-	var dominantColorResource by remember { mutableStateOf(Color.Gray) }
+	val currentSong by audioViewModel.currentSelectedAudio.collectAsState()
+	val progress by audioViewModel.progress.collectAsState()
+	var dominantColor by remember { mutableStateOf(Color.Gray) }
 	var barVisible by remember(uiState) {
 		mutableStateOf(uiState is UIState.Playing || uiState is UIState.Pausing)
 	}
 
-	LaunchedEffect(Unit) {
-//		dominantColorResource = getDominantColorFromResource(context, resourceId = R.drawable.logos__google_bard_icon)
-		dominantColorResource = getDominantColorFromUrl(context, imageUrl = "https://i.scdn.co/image/ab67616d0000b273b5097b81179824803664aaaf")
+	LaunchedEffect(currentSong) {
+		dominantColor = audioViewModel.getDominantColor()
 	}
 
+	val animatedColor by animateColorAsState(
+		targetValue = dominantColor,
+		animationSpec = tween(durationMillis = 1000, easing = { it }),
+		label = "Animated NowPlayingBar Color"// 1000ms duration for the animation
+	)
 
 	AnimatedVisibility(
 		visible = barVisible,
@@ -103,7 +109,22 @@ fun NowPlayingBar(
 				.wrapContentSize()
 				.clickable { onClick() }
 				.fillMaxWidth(0.95f)
-				.background(dominantColorResource.copy(0.9f), RoundedCornerShape(6.dp))
+				.background(
+					Brush.linearGradient(
+						start = Offset.Zero,
+						end = Offset.Infinite,
+						colors = listOf(
+							mixColors(arrayOf(animatedColor to 0.8f, MaterialTheme.colorScheme.onSurface to 0.2f)),
+							animatedColor,
+							animatedColor,
+							animatedColor,
+							animatedColor,
+							mixColors(arrayOf(animatedColor to 0.9f, MaterialTheme.colorScheme.onSurface to 0.1f)),
+						),
+						tileMode = TileMode.Clamp
+					),
+					RoundedCornerShape(6.dp)
+				)
 				.padding(6.dp)
 				.pointerInput(Unit) {
 					detectDragGestures { _, dragAmount ->
@@ -132,37 +153,46 @@ fun NowPlayingBar(
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					Icon(
-						painter = painterResource(R.drawable.material_icon_theme__gemini_ai),
-						contentDescription = "Spotify",
-						Modifier
+					AsyncImage(
+						model = currentSong?.imageSource,
+						contentDescription = "Song Label",
+						fallback = painterResource(R.drawable.material_icon_theme__gemini_ai),
+						contentScale = ContentScale.Crop,
+						modifier = Modifier
 							.width(44.dp)
-							.aspectRatio(1f),
-						tint = Color.Unspecified
+							.aspectRatio(1f)
+							.clip(RoundedCornerShape(4.dp))
 					)
 
 					Column(
 						verticalArrangement = Arrangement.SpaceEvenly,
 						horizontalAlignment = Alignment.Start,
-						modifier = Modifier.widthIn(max = 200.dp)
+						modifier = Modifier
+							.widthIn(max = 200.dp)
+							.padding(2.dp)
 					) {
 						Text(
 							text = currentSong?.title ?: "Unknown",
 							fontFamily = FontFamily(Font(R.font.spotifymixui_bold)),
-							color = MaterialTheme.colorScheme.onSurface,
+							color = Color.White,
 							fontWeight = FontWeight.Bold,
 							fontSize = 14.sp,
 							letterSpacing = (-0.5).sp,
+							lineHeight = 12.sp,
 							overflow = TextOverflow.Ellipsis,
 							modifier = Modifier.basicMarquee()
 						)
 
+						Spacer(Modifier.height(4.dp))
+
 						Text(
 //							text = currentSong?.artist ?: "Taylor Swift",
-							text = audioViewModel.uiState.value.javaClass.name,
+							text = audioViewModel.uiState.value.javaClass.simpleName,
 							fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
-							color = MaterialTheme.colorScheme.onSurface,
-							fontSize = 12.sp
+							color = Color.White,
+							fontSize = 12.sp,
+							lineHeight = 12.sp,
+							modifier = Modifier
 						)
 					}
 

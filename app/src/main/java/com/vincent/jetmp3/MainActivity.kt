@@ -9,19 +9,27 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.media3.common.util.UnstableApi
+import com.vincent.jetmp3.data.repositories.AuthRepository
 import com.vincent.jetmp3.media.service.MusicPlaybackService
 import com.vincent.jetmp3.ui.screens.AppScreen
 import com.vincent.jetmp3.ui.theme.JetMP3Theme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+	@Inject
+	lateinit var authRepository: AuthRepository
 	private var isServiceRunning = false
 
+	@UnstableApi
 	@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 	override fun onCreate(savedInstanceState: Bundle?) {
-		installSplashScreen()
+		val splashScreen = installSplashScreen()
+		splashScreen.setKeepOnScreenCondition {
+			authRepository.authenticating.value
+		}
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {

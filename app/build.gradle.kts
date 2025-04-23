@@ -7,7 +7,7 @@ plugins {
 	alias(libs.plugins.google.ksp)
 	alias(libs.plugins.dagger.hilt)
 	alias(libs.plugins.google.services)
-	id("kotlin-parcelize")
+	alias(libs.plugins.parcelize)
 }
 
 val localProperties = Properties().apply {
@@ -98,13 +98,15 @@ dependencies {
 	// Firebase
 //	implementation(platform(libs.firebase.bom))
 //	implementation(libs.firebase.analytics)
+//	implementation(libs.firebase.firestore.ktx)
+
+	// Coil
+	implementation(libs.accompanist.navigation.animation)
+	implementation(libs.coil.compose)
 
 	// Hilt
 	implementation(libs.hilt.android)
 	implementation(libs.androidx.hilt.navigation.compose)
-	implementation(libs.firebase.firestore.ktx)
-	implementation(libs.accompanist.navigation.animation)
-	implementation(libs.coil.compose)
 	ksp(libs.hilt.android.compiler)
 	ksp(libs.androidx.hilt.compiler)
 
@@ -122,5 +124,9 @@ dependencies {
 
 	// Cloudinary
 	implementation(libs.cloudinary.android)
+
+	// Moshi
+	implementation(libs.converter.moshi)
+	implementation(libs.moshi.kotlin)
 
 }

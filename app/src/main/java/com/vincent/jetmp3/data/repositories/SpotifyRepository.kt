@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.data.modules
+package com.vincent.jetmp3.data.repositories
 
 import android.app.Application
 import android.util.Base64
@@ -11,8 +11,8 @@ import com.vincent.jetmp3.data.datastore.apiTokenDataStore
 import com.vincent.jetmp3.data.constants.FetchState
 import com.vincent.jetmp3.domain.SpotifyDeveloperService
 import com.vincent.jetmp3.domain.SpotifyDeveloperTokenService
-import com.vincent.jetmp3.domain.models.Artist
-import com.vincent.jetmp3.domain.models.SpotifyTokenResponse
+import com.vincent.jetmp3.domain.models.SpotifyArtist
+import com.vincent.jetmp3.domain.models.SpotifyToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,19 +25,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SpotifyManager @Inject constructor(
+class SpotifyRepository @Inject constructor(
 	private val context: Application,
 	private val spotifyDeveloperTokenService: SpotifyDeveloperTokenService,
 	private val spotifyDeveloperService: SpotifyDeveloperService
 ) {
-	private val _token: MutableStateFlow<SpotifyTokenResponse> = MutableStateFlow(SpotifyTokenResponse())
+	private val _token: MutableStateFlow<SpotifyToken> = MutableStateFlow(SpotifyToken())
 
 	private val _fetchState = MutableStateFlow(FetchState.LOADING)
 	val fetchState: StateFlow<FetchState>
 		get() = _fetchState
 
-	private val _fetchedArtist = MutableStateFlow<Artist?>(null)
-	val fetchedArtist: StateFlow<Artist?>
+	private val _fetchedArtist = MutableStateFlow<SpotifyArtist?>(null)
+	val fetchedArtist: StateFlow<SpotifyArtist?>
 		get() = _fetchedArtist
 
 	private val artistId = "1Xyo4u8uXC1ZmMpatF05PJ"
@@ -98,7 +98,7 @@ class SpotifyManager @Inject constructor(
 		return
 	}
 
-	private suspend fun persistApiToken(token: SpotifyTokenResponse) {
+	private suspend fun persistApiToken(token: SpotifyToken) {
 		context.apiTokenDataStore.edit { prefs ->
 			prefs[stringPreferencesKey("access_token")] = token.accessToken
 			prefs[stringPreferencesKey("token_type")] = token.tokenType
@@ -117,7 +117,7 @@ class SpotifyManager @Inject constructor(
 			val currentTime = System.currentTimeMillis()
 			val tokenAge = (currentTime - createdAt.toLong()) / 1000
 			if (tokenAge < expiresIn!!) {
-				_token.value = SpotifyTokenResponse(
+				_token.value = SpotifyToken(
 					accessToken = accessToken!!,
 					tokenType = tokenType!!,
 					expiresIn = expiresIn

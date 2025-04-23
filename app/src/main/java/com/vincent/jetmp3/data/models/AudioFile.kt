@@ -13,5 +13,6 @@ data class AudioFile(
 	val title: String,
 	val artist: String,
 	val duration: Long,
-	val type: String = "local"
+	val imageSource: String = "https://picsum.photos/500/500",
+	val type: String = "local",
 ) : Parcelable

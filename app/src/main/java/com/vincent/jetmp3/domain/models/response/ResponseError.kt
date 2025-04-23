@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.domain.models
+package com.vincent.jetmp3.domain.models.response
 
 data class ResponseError(
 	val error: ErrorBody
