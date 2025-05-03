@@ -147,7 +147,7 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 	val audioViewModel = hiltViewModel<AudioViewModel>()
 	NavHost(
 		navController = navController,
-		startDestination = Screen.Home.route,
+		startDestination = Screen.Auth.route,
 		route = "main_graph",
 	) {
 		composable(
@@ -171,7 +171,9 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				)
 			}
 		) {
-			AuthScreen(navController = navController, onValidated = { navController.navigate(Screen.Home.route) })
+			AuthScreen(onValidated = { navController.navigate(Screen.Home.route) {
+				popUpTo(0) { inclusive = true }
+			} })
 		}
 		composable(
 			route = Screen.Home.route,

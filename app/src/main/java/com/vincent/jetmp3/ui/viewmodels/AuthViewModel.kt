@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vincent.jetmp3.data.repositories.AuthRepository
 import com.vincent.jetmp3.domain.models.request.LoginRequest
+import com.vincent.jetmp3.domain.models.request.SignupRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +36,7 @@ class AuthViewModel @Inject constructor(
 
 	val authValid = authRepository.authValid
 
-	fun login() {
+	private fun login() {
 		if (_email.value.isEmpty() || _password.value.isEmpty()) return
 		viewModelScope.launch {
 			_uiState.value = AuthState.Fetching
@@ -46,6 +47,28 @@ class AuthViewModel @Inject constructor(
 			} finally {
 				_uiState.value = AuthState.Ready
 			}
+		}
+	}
+
+	private fun register() {
+		if (_email.value.isEmpty() || _password.value.isEmpty() || _username.value.isEmpty()) return
+		viewModelScope.launch {
+			_uiState.value = AuthState.Fetching
+			try {
+				authRepository.register(SignupRequest(_username.value, _email.value, _password.value))
+			} catch (e: Exception) {
+				Log.d("AuthViewModel", "Auth Error")
+			} finally {
+				_uiState.value = AuthState.Ready
+			}
+		}
+	}
+
+	fun handle() {
+		if (_isLoggingIn.value) {
+			login()
+		} else {
+			register()
 		}
 	}
 

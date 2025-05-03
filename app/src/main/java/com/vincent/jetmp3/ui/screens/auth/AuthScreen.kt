@@ -35,14 +35,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.viewmodels.AuthViewModel
 
 @Composable
 fun AuthScreen(
-	navController: NavController,
 	authViewModel: AuthViewModel = hiltViewModel(),
 	onValidated: () -> Unit = {},
 ) {
@@ -153,7 +151,7 @@ fun AuthScreen(
 
 
 					Button(
-						onClick = { authViewModel.login() },
+						onClick = { authViewModel.handle() },
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(50.dp),

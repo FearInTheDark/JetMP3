@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vincent.jetmp3.data.datastore.authToken
 import com.vincent.jetmp3.domain.AuthService
 import com.vincent.jetmp3.domain.models.request.LoginRequest
+import com.vincent.jetmp3.domain.models.request.SignupRequest
 import com.vincent.jetmp3.utils.decodeJwt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,11 +28,14 @@ class AuthRepository @Inject constructor(
 	private val accessTokenKey = stringPreferencesKey("access_token")
 	private val expiredAtKey = stringPreferencesKey("expired_at")
 
-	private val _authenticating : MutableStateFlow<Boolean> = MutableStateFlow(true)
+	private val _authenticating: MutableStateFlow<Boolean> = MutableStateFlow(true)
 	val authenticating = _authenticating.asStateFlow()
 
 	private val _authValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
 	val authValid = _authValid.asStateFlow()
+
+	private val _accessToken : MutableStateFlow<String> = MutableStateFlow("")
+	val accessToken = _accessToken.asStateFlow()
 
 	init {
 		scope.launch {
@@ -47,7 +51,22 @@ class AuthRepository @Inject constructor(
 					saveToken(it.tokenResponse)
 					_authValid.value = true
 				}
-			}catch (e: Exception) {
+			} catch (e: Exception) {
+				e.printStackTrace()
+				_authValid.value = false
+			}
+		}
+	}
+
+	fun register(signupRequest: SignupRequest) {
+		scope.launch {
+			try {
+				val tokenResponse = authService.register(signupRequest).body()
+				tokenResponse?.let {
+					saveToken(it.tokenResponse)
+					_authValid.value = true
+				}
+			} catch (e: Exception) {
 				e.printStackTrace()
 				_authValid.value = false
 			}
@@ -71,6 +90,7 @@ class AuthRepository @Inject constructor(
 			context.authToken.edit { prefs ->
 				prefs[accessTokenKey] = token
 				prefs[expiredAtKey] = decoded.expiresAt.time.toString()
+				_accessToken.value = token
 			}
 		}
 	}
@@ -86,6 +106,10 @@ class AuthRepository @Inject constructor(
 
 		val now = System.currentTimeMillis()
 		_authValid.value = !(token == null || expiredAt == null || now > expiredAt)
+
+		if (_authValid.value && token != null) {
+			_accessToken.value = token
+		}
 
 		_authenticating.value = false
 	}

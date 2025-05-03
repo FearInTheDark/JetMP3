@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,11 +57,16 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.data.models.AudioFile
+import com.vincent.jetmp3.ui.components.home.RecentCategory
+import com.vincent.jetmp3.ui.components.home.RecentScroll
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
+import com.vincent.jetmp3.ui.theme.LabelLineBold
+import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.UIEvent
 import com.vincent.jetmp3.ui.viewmodels.UIState
+import com.vincent.jetmp3.utils.RecentCategoryItem
 import okhttp3.internal.concurrent.formatDuration
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -84,8 +91,7 @@ fun SongListScreen(
 		Column(
 			Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.surface)
-				.padding(4.dp),
+				.background(MaterialTheme.colorScheme.surface),
 			verticalArrangement = Arrangement.spacedBy(12.dp),
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
@@ -168,13 +174,41 @@ fun SongListScreen(
 			LazyColumn(
 				modifier = Modifier
 					.fillMaxSize()
-					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp)),
+					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp))
+					.padding(horizontal = 4.dp),
 				contentPadding = PaddingValues(
 					top = 12.dp,
 					bottom = 150.dp
 				),
 				verticalArrangement = Arrangement.spacedBy(8.dp)
 			) {
+
+				item {
+					RecentCategory(
+						categories = listOf(
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+							RecentCategoryItem("", ""),
+						)
+					)
+				}
+
+				item {
+					Spacer(Modifier.height(8.dp))
+				}
+
+				item {
+					RecentScroll()
+				}
+
+				item {
+					Spacer(Modifier.height(8.dp))
+				}
+
 				itemsIndexed(audioFiles) { index, audioFile ->
 					Card(
 						modifier = Modifier
@@ -207,12 +241,6 @@ fun SongListScreen(
 										)
 								) {
 									// Placeholder for album art or song icon
-//									Icon(
-//										imageVector = Icons.Default.MusicNote,
-//										contentDescription = null,
-//										modifier = Modifier.align(Alignment.Center),
-//										tint = MaterialTheme.colorScheme.onSecondaryContainer
-//									)
 									AsyncImage(
 										model = ImageRequest.Builder(context)
 											.data("https://picsum.photos/500/500").build(),
@@ -230,14 +258,14 @@ fun SongListScreen(
 								) {
 									Text(
 										text = audioFile.displayName,
-										style = MaterialTheme.typography.bodyLarge,
+										style = LabelLineBold,
 										color = MaterialTheme.colorScheme.onSurface,
 										maxLines = 1,
 										overflow = TextOverflow.Ellipsis
 									)
 									Text(
 										text = audioFile.artist,
-										style = MaterialTheme.typography.bodySmall,
+										style = LabelLineSmall,
 										color = MaterialTheme.colorScheme.onSurfaceVariant,
 										maxLines = 1,
 										overflow = TextOverflow.Ellipsis
@@ -257,5 +285,4 @@ fun SongListScreen(
 			}
 		}
 	}
-
 }

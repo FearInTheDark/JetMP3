@@ -31,3 +31,13 @@ data class PlaybackState (
     val isBuffering: Boolean = false,
     val hasEnded: Boolean = false
 )
+
+data class RecentCategoryItem(
+    val imageUrl: String,
+    val title: String
+)
+data class GridItem(
+    val id: Int,
+    val height: Int,
+    val spanCount: Int = 1
+)

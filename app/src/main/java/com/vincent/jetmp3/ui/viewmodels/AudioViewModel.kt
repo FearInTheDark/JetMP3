@@ -117,6 +117,7 @@ class AudioViewModel @Inject constructor(
 		viewModelScope.launch {
 			_localAudioList.value = repository.getLocalAudioData()
 			_cloudTracks.value = repository.getNestAudioData()
+			Log.d("AudioViewModel", "_cloudTracks: ${_cloudTracks.value}")
 			setMediaItems()
 			_uiState.value = UIState.Ready
 		}

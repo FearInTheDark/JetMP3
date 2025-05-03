@@ -28,9 +28,25 @@ val TitleLineLarge = TextStyle(
 	letterSpacing = 0.5.sp,
 )
 
+val TitleLineBig = TextStyle(
+	fontFamily = SpotifyMixUI,
+	fontWeight = FontWeight.Bold,
+	fontSize = 18.sp,
+	lineHeight = 24.sp,
+	letterSpacing = -(0.5).sp,
+)
+
 val LabelLineMedium = TextStyle(
 	fontFamily = SpotifyMixUI,
 	fontWeight = FontWeight.Normal,
+	fontSize = 14.sp,
+	lineHeight = 20.sp,
+	letterSpacing = 0.5.sp,
+)
+
+val LabelLineBold = TextStyle(
+	fontFamily = SpotifyMixUI,
+	fontWeight = FontWeight.Bold,
 	fontSize = 14.sp,
 	lineHeight = 20.sp,
 	letterSpacing = 0.5.sp,
