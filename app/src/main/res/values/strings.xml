@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">JetMP3</string>
     <string name="notification_channel_name">Music Playback</string>
+    <string name="auth_welcome">Millions of songs.\nFree and unlimited.</string>
+    <string name="auth_signup">Signup for free</string>
+    <string name="auth_signin">Log in</string>
+
 </resources>

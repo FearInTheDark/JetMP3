@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,9 +65,11 @@ import com.vincent.jetmp3.ui.theme.LabelLineBold
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
+import com.vincent.jetmp3.ui.viewmodels.HomeViewModel
 import com.vincent.jetmp3.ui.viewmodels.UIEvent
 import com.vincent.jetmp3.ui.viewmodels.UIState
 import com.vincent.jetmp3.utils.RecentCategoryItem
+import kotlinx.coroutines.launch
 import okhttp3.internal.concurrent.formatDuration
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -75,8 +78,11 @@ import okhttp3.internal.concurrent.formatDuration
 @Composable
 fun SongListScreen(
 	viewModel: AudioViewModel = hiltViewModel(),
-	onItemClick: () -> Unit
+	homeViewModel: HomeViewModel = hiltViewModel(),
+	onItemClick: () -> Unit,
+	action: () -> Unit = {}
 ) {
+	val coroutineScope = rememberCoroutineScope()
 	val audioFiles: List<AudioFile> by viewModel.localAudioList.collectAsState()
 	val refreshing = remember(viewModel.uiState) {
 		viewModel.uiState.value == UIState.Fetching
@@ -158,7 +164,7 @@ fun SongListScreen(
 				},
 				actions = {
 					IconButton(
-						onClick = {}
+						onClick = { coroutineScope.launch { homeViewModel.logout(); action() } }
 					) {
 
 						Icon(
@@ -186,15 +192,23 @@ fun SongListScreen(
 				item {
 					RecentCategory(
 						categories = listOf(
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
-							RecentCategoryItem("", ""),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
+							RecentCategoryItem(),
 						)
 					)
+				}
+
+				item {
+					Spacer(Modifier.height(8.dp))
+				}
+
+				item {
+					RecentScroll()
 				}
 
 				item {

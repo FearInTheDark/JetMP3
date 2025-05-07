@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.log
 
 @HiltViewModel
 class AudioViewModel @Inject constructor(
@@ -81,6 +82,7 @@ class AudioViewModel @Inject constructor(
 
 					else -> {}
 				}
+				Log.d("AudioViewModel", "playerState: $mediaState")
 			}
 		}
 	}

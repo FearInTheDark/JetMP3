@@ -19,11 +19,13 @@ import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.google.gson.Gson
 import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.domain.models.PaletteColor
 import com.vincent.jetmp3.domain.models.response.TokenResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import org.json.JSONObject
 import java.util.Date
 
@@ -157,4 +159,10 @@ fun paletteToColor(paletteColor: PaletteColor): Color {
 	}
 
 	return Color(paletteColor.rgb[0].toInt(), paletteColor.rgb[1].toInt(), paletteColor.rgb[2].toInt())
+}
+
+inline fun <reified T> ResponseBody?.parseErrorBody(): T? {
+	return this?.charStream()?.let {
+		Gson().fromJson(it, T::class.java)
+	}
 }

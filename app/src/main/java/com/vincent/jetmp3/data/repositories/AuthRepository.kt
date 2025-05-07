@@ -4,14 +4,15 @@ import android.app.Application
 import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.gson.Gson
+import com.vincent.jetmp3.core.annotation.ApplicationScope
 import com.vincent.jetmp3.data.datastore.authToken
 import com.vincent.jetmp3.domain.AuthService
 import com.vincent.jetmp3.domain.models.request.LoginRequest
 import com.vincent.jetmp3.domain.models.request.SignupRequest
+import com.vincent.jetmp3.domain.models.response.LoginResponse
 import com.vincent.jetmp3.utils.decodeJwt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -22,9 +23,9 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor(
 	private val context: Application,
-	private val authService: AuthService
+	@ApplicationScope private val coroutineScope: CoroutineScope,
+	private val authService: AuthService,
 ) {
-	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 	private val accessTokenKey = stringPreferencesKey("access_token")
 	private val expiredAtKey = stringPreferencesKey("expired_at")
 
@@ -34,53 +35,82 @@ class AuthRepository @Inject constructor(
 	private val _authValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
 	val authValid = _authValid.asStateFlow()
 
-	private val _accessToken : MutableStateFlow<String> = MutableStateFlow("")
+	private val _accessToken: MutableStateFlow<String> = MutableStateFlow("")
 	val accessToken = _accessToken.asStateFlow()
 
+	private val _errorMessage: MutableStateFlow<MutableList<String>> = MutableStateFlow(mutableListOf())
+	val errorMessage = _errorMessage.asStateFlow()
+
 	init {
-		scope.launch {
+		coroutineScope.launch {
 			validateAuthState()
 		}
 	}
 
-	fun login(request: LoginRequest) {
-		scope.launch {
-			try {
-				val tokenResponse = authService.login(request).body()
-				tokenResponse?.let {
-					saveToken(it.tokenResponse)
+	suspend fun login(request: LoginRequest) {
+		try {
+			val response = authService.login(request)
+
+			if (response.isSuccessful) {
+				response.body()?.tokenResponse?.let {
+					saveToken(it)
 					_authValid.value = true
 				}
-			} catch (e: Exception) {
-				e.printStackTrace()
-				_authValid.value = false
-			}
-		}
-	}
+			} else {
+				val errorBody = response.errorBody()?.string()
+				Log.d("AuthRepository", "Error Body: $errorBody")
+				errorBody?.let { it ->
+					Log.d("AuthRepository", "Error Body: $it")
+					val gson = Gson()
+					val errorResponse: LoginResponse = gson.fromJson(errorBody, LoginResponse::class.java)
 
-	fun register(signupRequest: SignupRequest) {
-		scope.launch {
-			try {
-				val tokenResponse = authService.register(signupRequest).body()
-				tokenResponse?.let {
-					saveToken(it.tokenResponse)
-					_authValid.value = true
+					errorResponse.message?.let { _errorMessage.value = it.toMutableList() }
 				}
-			} catch (e: Exception) {
-				e.printStackTrace()
 				_authValid.value = false
 			}
-		}
-	}
 
-	fun logout() {
-		scope.launch {
-			context.authToken.edit { prefs ->
-				prefs[accessTokenKey] = ""
-				prefs[expiredAtKey] = ""
-			}
+		} catch (e: Exception) {
+			e.printStackTrace()
 			_authValid.value = false
+			_errorMessage.value = mutableListOf("Credentials not match, try again!")
 		}
+	}
+
+	suspend fun register(signupRequest: SignupRequest) {
+		try {
+			val response = authService.register(signupRequest)
+
+			if (response.isSuccessful) {
+				response.body()?.tokenResponse?.let {
+					saveToken(it)
+					_authValid.value = true
+				}
+			} else {
+				val errorBody = response.errorBody()?.string()
+				Log.d("AuthRepository", "Error Body: $errorBody")
+				errorBody?.let { it ->
+					Log.d("AuthRepository", "Error Body: $it")
+					val gson = Gson()
+					val errorResponse: LoginResponse = gson.fromJson(errorBody, LoginResponse::class.java)
+
+					errorResponse.message?.let { _errorMessage.value = it.toMutableList() }
+				}
+				_authValid.value = false
+			}
+
+		} catch (e: Exception) {
+			e.printStackTrace()
+			_authValid.value = false
+			_errorMessage.value = mutableListOf("Error occurred, try again!")
+		}
+	}
+
+	suspend fun logout() {
+		context.authToken.edit { prefs ->
+			prefs[accessTokenKey] = ""
+			prefs[expiredAtKey] = ""
+		}
+		_authValid.value = false
 	}
 
 	private suspend fun saveToken(token: String) {
@@ -112,6 +142,10 @@ class AuthRepository @Inject constructor(
 		}
 
 		_authenticating.value = false
+	}
+
+	fun clearErrors() {
+		_errorMessage.value = mutableListOf()
 	}
 
 }

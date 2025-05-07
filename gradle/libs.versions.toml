@@ -42,6 +42,7 @@ kotlinUrlGen = "1.10.0"
 cloudinaryAndroid = "3.0.2"
 paletteKtx = "1.0.0"
 converterMoshi = "2.11.0"
+lottieCompose = "6.6.6"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -90,6 +91,7 @@ kotlin-url-gen = { group = "com.cloudinary", name = "kotlin-url-gen", version.re
 cloudinary-android = { group = "com.cloudinary", name = "cloudinary-android", version.ref = "cloudinaryAndroid" }
 androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
 converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottieCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

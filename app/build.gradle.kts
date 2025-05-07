@@ -71,6 +71,7 @@ dependencies {
 	implementation(libs.androidx.espresso.core)
 	implementation(libs.androidx.material)
 	implementation(libs.androidx.palette.ktx)
+	implementation(libs.lottie.compose)
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
@@ -117,7 +118,7 @@ dependencies {
 
 	// Retrofit
 	implementation(libs.retrofit)
-//	implementation(libs.converter.gson)
+	implementation(libs.converter.gson)
 
 	// Splash Screen
 	implementation(libs.androidx.core.splashscreen)

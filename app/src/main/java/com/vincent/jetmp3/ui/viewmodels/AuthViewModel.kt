@@ -34,6 +34,8 @@ class AuthViewModel @Inject constructor(
 	private val _username: MutableState<String> = mutableStateOf("")
 	val username: MutableState<String> = _username
 
+	val errorMessage = authRepository.errorMessage
+
 	val authValid = authRepository.authValid
 
 	private fun login() {
@@ -70,6 +72,10 @@ class AuthViewModel @Inject constructor(
 		} else {
 			register()
 		}
+	}
+
+	fun clearErrors() {
+		authRepository.clearErrors()
 	}
 
 	sealed class AuthState {

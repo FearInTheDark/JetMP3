@@ -42,6 +42,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.vincent.jetmp3.ui.components.navigation.MyNavigationBar
 import com.vincent.jetmp3.ui.components.navigation.NowPlayingBar
 import com.vincent.jetmp3.ui.screens.auth.AuthScreen
+import com.vincent.jetmp3.ui.screens.auth.AuthWelcome
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.utils.Screen
 
@@ -57,7 +58,7 @@ fun AppScreen(
 	val currentRoute = navBackStackEntry?.destination?.route
 	val permissionState = rememberPermissionState(Manifest.permission.READ_MEDIA_AUDIO)
 	val showNavBar by derivedStateOf {
-		currentRoute !in listOf(Screen.Auth.route, Screen.NowPlaying.route)
+		currentRoute !in listOf(Screen.Auth.route, Screen.AuthWelcome.route, Screen.NowPlaying.route)
 	}
 
 	LaunchedEffect(Unit) {
@@ -147,16 +148,49 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 	val audioViewModel = hiltViewModel<AudioViewModel>()
 	NavHost(
 		navController = navController,
-		startDestination = Screen.Auth.route,
+		startDestination = Screen.AuthWelcome.route,
 		route = "main_graph",
 	) {
+		composable(
+			route = Screen.AuthWelcome.route,
+			enterTransition = {
+				slideIntoContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Down,
+					animationSpec = tween(
+						durationMillis = 500,
+						delayMillis = 10
+					)
+				)
+			},
+			exitTransition = {
+				slideOutOfContainer(
+					towards = AnimatedContentTransitionScope.SlideDirection.Left,
+					animationSpec = tween(
+						durationMillis = 500,
+						delayMillis = 10
+					)
+				)
+			}
+		) {
+			AuthWelcome(
+				onSignInAction = { navController.navigate(Screen.Auth.route) },
+				onSignUpAction = { navController.navigate(Screen.Auth.route) },
+				onValidated = {
+					navController.navigate(Screen.Home.route) {
+						popUpTo(navController.graph.startDestinationId) { inclusive = true }
+						launchSingleTop = true
+					}
+				}
+			)
+		}
+
 		composable(
 			route = Screen.Auth.route,
 			enterTransition = {
 				slideIntoContainer(
 					towards = AnimatedContentTransitionScope.SlideDirection.Left,
 					animationSpec = tween(
-						durationMillis = 1000,
+						durationMillis = 500,
 						delayMillis = 10
 					)
 				)
@@ -165,15 +199,18 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				slideOutOfContainer(
 					towards = AnimatedContentTransitionScope.SlideDirection.Down,
 					animationSpec = tween(
-						durationMillis = 1000,
+						durationMillis = 500,
 						delayMillis = 10
 					)
 				)
 			}
 		) {
-			AuthScreen(onValidated = { navController.navigate(Screen.Home.route) {
-				popUpTo(0) { inclusive = true }
-			} })
+			AuthScreen {
+				navController.navigate(Screen.Home.route) {
+					popUpTo(navController.graph.startDestinationId) { inclusive = true }
+					launchSingleTop = true
+				}
+			}
 		}
 		composable(
 			route = Screen.Home.route,
@@ -222,9 +259,15 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				)
 			}
 		) {
-			SongListScreen(audioViewModel) {
-				onItemClick()
-			}
+			SongListScreen(
+				audioViewModel,
+				onItemClick = onItemClick,
+				action = {
+					navController.navigate(Screen.AuthWelcome.route) {
+						popUpTo(navController.graph.startDestinationId) { inclusive = true }
+						launchSingleTop = true
+					}
+				})
 		}
 
 		composable(route = Screen.Search.route) {

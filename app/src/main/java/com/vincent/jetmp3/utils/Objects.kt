@@ -10,6 +10,7 @@ sealed class Screen(val route: String) {
     data object NowPlaying : Screen("now_playing")
     data object SplashScreen : Screen("splash_screen")
     data object PlayerScreen : Screen("player_screen")
+    data object AuthWelcome: Screen("auth_welcome")
     data object Auth : Screen("auth_screen")
 }
 
@@ -33,8 +34,8 @@ data class PlaybackState (
 )
 
 data class RecentCategoryItem(
-    val imageUrl: String,
-    val title: String
+    val imageUrl: String = "",
+    val title: String = ""
 )
 data class GridItem(
     val id: Int,

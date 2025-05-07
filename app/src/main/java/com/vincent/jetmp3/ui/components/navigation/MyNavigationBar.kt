@@ -66,9 +66,7 @@ fun MyNavigationBar(
 			icon = R.drawable.solar__play_outline,
 			activeIcon = R.drawable.solar__play_bold
 		),
-
-		)
-
+	)
 
 	NavigationBar(
 		containerColor = Color.Transparent,
@@ -99,7 +97,6 @@ fun MyNavigationBar(
 				}
 			}
 		}
-
 	}
 }
 

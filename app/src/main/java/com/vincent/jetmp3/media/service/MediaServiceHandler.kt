@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.media.service
 
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -84,6 +85,7 @@ class MediaServiceHandler @Inject constructor(
 			ExoPlayer.STATE_ENDED -> _playerState.value = PlayerState.Ended
 			else -> _playerState.value = PlayerState.Idle
 		}
+		updatePlaybackState()
 	}
 
 	@OptIn(DelicateCoroutinesApi::class)
@@ -97,6 +99,7 @@ class MediaServiceHandler @Inject constructor(
 		} else {
 			stopProgressUpdate()
 		}
+		updatePlaybackState(isPlaying = isPlaying)
 	}
 
 	private suspend fun playOrPause() {
@@ -125,6 +128,30 @@ class MediaServiceHandler @Inject constructor(
 			isPlaying = false
 		)
 	}
+
+	private fun updatePlaybackState(
+		isPlaying: Boolean = exoPlayer.isPlaying,
+		isBuffering: Boolean = exoPlayer.playbackState == ExoPlayer.STATE_BUFFERING,
+		hasEnded: Boolean = exoPlayer.playbackState == ExoPlayer.STATE_ENDED
+	) {
+		_playbackState.value = PlaybackState(
+			isPlaying = isPlaying,
+			currentIndex = exoPlayer.currentMediaItemIndex,
+			currentPosition = exoPlayer.currentPosition,
+			duration = exoPlayer.duration,
+			bufferedPosition = exoPlayer.bufferedPosition,
+			trackList = exoPlayer.currentTimeline.windowCount.takeIf { it > 0 }?.let {
+				(0 until it).mapNotNull { i -> exoPlayer.getMediaItemAt(i) }
+			} ?: emptyList(),
+			currentTrack = exoPlayer.currentMediaItem,
+			isBuffering = isBuffering,
+			hasEnded = hasEnded
+		)
+
+		Log.d("MediaServiceHandler", "_playbackState: ${_playbackState.value}")
+
+	}
+
 }
 
 sealed class PlayerEvent {
