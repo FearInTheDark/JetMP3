@@ -12,4 +12,8 @@ val DarkSurface = Color(0xFF040404)
 val DarOnSurface = Color(0xFFFFFFFF)
 
 val DarkNowPlayingBar = Color(0xFF495359)
-val LightNowPlayingBar = Color(0xFF959595)
+val LightNowPlayingBar = Color(0xFFC4C3C3)
+
+// Neutral 60
+val DarkBackground = Color(0xFF1C1B1F)
+val LightBackground = Color(0xFFFFFBFE)

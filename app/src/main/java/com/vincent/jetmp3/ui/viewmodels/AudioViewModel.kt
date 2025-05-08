@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.vincent.jetmp3.data.models.AudioFile
-import com.vincent.jetmp3.data.repositories.AudioRepository
+import com.vincent.jetmp3.data.repository.AudioRepository
 import com.vincent.jetmp3.domain.ImagePaletteService
 import com.vincent.jetmp3.domain.models.Track
 import com.vincent.jetmp3.domain.models.request.VibrantRequest
@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.log
 
 @HiltViewModel
 class AudioViewModel @Inject constructor(

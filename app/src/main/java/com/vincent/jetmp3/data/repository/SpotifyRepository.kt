@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.data.repositories
+package com.vincent.jetmp3.data.repository
 
 import android.app.Application
 import android.util.Base64
@@ -7,15 +7,14 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vincent.jetmp3.BuildConfig
-import com.vincent.jetmp3.data.datastore.apiTokenDataStore
+import com.vincent.jetmp3.core.annotation.ApplicationScope
 import com.vincent.jetmp3.data.constants.FetchState
+import com.vincent.jetmp3.data.datastore.apiTokenDataStore
 import com.vincent.jetmp3.domain.SpotifyDeveloperService
 import com.vincent.jetmp3.domain.SpotifyDeveloperTokenService
 import com.vincent.jetmp3.domain.models.SpotifyArtist
 import com.vincent.jetmp3.domain.models.SpotifyToken
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +27,9 @@ import javax.inject.Singleton
 class SpotifyRepository @Inject constructor(
 	private val context: Application,
 	private val spotifyDeveloperTokenService: SpotifyDeveloperTokenService,
-	private val spotifyDeveloperService: SpotifyDeveloperService
+	private val spotifyDeveloperService: SpotifyDeveloperService,
+	@ApplicationScope
+	private val coroutineScope: CoroutineScope
 ) {
 	private val _token: MutableStateFlow<SpotifyToken> = MutableStateFlow(SpotifyToken())
 
@@ -41,10 +42,9 @@ class SpotifyRepository @Inject constructor(
 		get() = _fetchedArtist
 
 	private val artistId = "1Xyo4u8uXC1ZmMpatF05PJ"
-	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
 	init {
-		scope.launch {
+		coroutineScope.launch {
 			restoreApiToken()
 		}
 	}

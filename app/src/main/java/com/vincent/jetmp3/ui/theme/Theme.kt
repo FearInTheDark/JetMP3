@@ -12,13 +12,15 @@ private val DarkColorScheme = darkColorScheme(
 	secondary = PurpleGrey80,
 	tertiary = DarkNowPlayingBar,
 	surface = DarkSurface,
-	onSurface = DarOnSurface
+	onSurface = DarOnSurface,
+	background = DarkBackground,
 )
 
 private val LightColorScheme = lightColorScheme(
 	primary = Purple40,
 	secondary = PurpleGrey40,
-	tertiary = LightNowPlayingBar
+	tertiary = LightNowPlayingBar,
+	background = LightBackground
 
 	/* Other default colors to override
 	background = Color(0xFFFFFBFE),

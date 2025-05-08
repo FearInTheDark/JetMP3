@@ -5,7 +5,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vincent.jetmp3.data.repositories.AuthRepository
+import com.vincent.jetmp3.data.repository.AuthRepository
 import com.vincent.jetmp3.domain.models.request.LoginRequest
 import com.vincent.jetmp3.domain.models.request.SignupRequest
 import dagger.hilt.android.lifecycle.HiltViewModel

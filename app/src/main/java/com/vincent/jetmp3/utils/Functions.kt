@@ -5,12 +5,8 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.MediaItem
@@ -19,13 +15,11 @@ import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.google.gson.Gson
 import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.domain.models.PaletteColor
 import com.vincent.jetmp3.domain.models.response.TokenResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.ResponseBody
 import org.json.JSONObject
 import java.util.Date
 
@@ -132,37 +126,10 @@ fun mixColors(colors: Array<Pair<Color, Float>>): Color {
 	return Color(r / totalWeight, g / totalWeight, b / totalWeight, a / totalWeight)
 }
 
-fun Modifier.scaleOnTap(
-	scale: Float,
-	onPressStart: () -> Unit,
-	onPressEnd: () -> Unit,
-	onTap: (() -> Unit)?
-) = this
-	.scale(scale)
-	.pointerInput(Unit) {
-		detectTapGestures(
-			onPress = {
-				onPressStart()
-				try {
-					awaitRelease()
-				} finally {
-					onPressEnd()
-				}
-			},
-			onTap = { onTap?.let { onTap() } }
-		)
-	}
-
 fun paletteToColor(paletteColor: PaletteColor): Color {
 	require(paletteColor.rgb.size == 3) {
 		"PaletteColor must have exactly 3 RGB values"
 	}
 
 	return Color(paletteColor.rgb[0].toInt(), paletteColor.rgb[1].toInt(), paletteColor.rgb[2].toInt())
-}
-
-inline fun <reified T> ResponseBody?.parseErrorBody(): T? {
-	return this?.charStream()?.let {
-		Gson().fromJson(it, T::class.java)
-	}
 }

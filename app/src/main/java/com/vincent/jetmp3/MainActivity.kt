@@ -9,7 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.media3.common.util.UnstableApi
-import com.vincent.jetmp3.data.repositories.AuthRepository
+import com.vincent.jetmp3.data.repository.AuthRepository
 import com.vincent.jetmp3.media.service.MusicPlaybackService
 import com.vincent.jetmp3.ui.screens.AppScreen
 import com.vincent.jetmp3.ui.theme.JetMP3Theme

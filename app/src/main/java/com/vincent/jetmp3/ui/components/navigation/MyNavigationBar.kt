@@ -31,7 +31,7 @@ import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.utils.NavigationBarItem
 import com.vincent.jetmp3.utils.Screen
-import com.vincent.jetmp3.utils.scaleOnTap
+import com.vincent.jetmp3.utils.functions.scaleOnTap
 
 @Composable
 fun MyNavigationBar(

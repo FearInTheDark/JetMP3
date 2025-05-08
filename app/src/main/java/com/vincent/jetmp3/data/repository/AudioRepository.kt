@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.data.repositories
+package com.vincent.jetmp3.data.repository
 
 import android.util.Log
 import com.vincent.jetmp3.data.models.AudioFile
@@ -22,7 +22,7 @@ class AudioRepository @Inject constructor(
 		while (authRepository.authenticating.value) {
 			delay(100)
 		}
-		Log.d("AudioRepository", authRepository.accessToken.value)
+//		Log.d("AudioRepository", authRepository.accessToken.value)
 		val response = nestService.getAllTracks(auth = "Bearer ".plus(authRepository.accessToken.value))
 		if (response.isSuccessful) {
 			Log.d("AudioRepository", "Response: ${response.body()}")

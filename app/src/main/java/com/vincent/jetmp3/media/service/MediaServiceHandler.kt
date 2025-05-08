@@ -4,7 +4,9 @@ import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.utils.PlaybackState
+import com.vincent.jetmp3.utils.functions.string
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -24,9 +26,8 @@ class MediaServiceHandler @Inject constructor(
 	private val _playerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Initial)
 	val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
 
-	private val _playbackState : MutableStateFlow<PlaybackState> = MutableStateFlow(PlaybackState())
+	private val _playbackState: MutableStateFlow<PlaybackState> = MutableStateFlow(PlaybackState())
 	val playbackState = _playbackState.asStateFlow()
-
 
 	private var job: Job? = null
 
@@ -37,11 +38,17 @@ class MediaServiceHandler @Inject constructor(
 	fun setMediaItem(mediaItem: MediaItem) {
 		exoPlayer.setMediaItem(mediaItem)
 		exoPlayer.prepare()
+		Log.d("MediaServiceHandler", "setMediaItem: ${mediaItem.string()}")
+		exoPlayer.play()
 	}
 
 	fun setMediaItemList(mediaItems: List<MediaItem>) {
 		exoPlayer.setMediaItems(mediaItems)
 		exoPlayer.prepare()
+	}
+
+	fun setAudioFileQueue(items: List<AudioFile>) {
+
 	}
 
 	suspend fun onPlayerEvents(
@@ -69,9 +76,7 @@ class MediaServiceHandler @Inject constructor(
 			}
 
 			is PlayerEvent.UpdateProgress -> {
-				exoPlayer.seekTo(
-					(exoPlayer.duration * playerEvent.newProgress).toLong()
-				)
+				exoPlayer.seekTo((exoPlayer.duration * playerEvent.newProgress).toLong())
 			}
 
 			PlayerEvent.Stop -> stopProgressUpdate()
@@ -143,7 +148,7 @@ class MediaServiceHandler @Inject constructor(
 			trackList = exoPlayer.currentTimeline.windowCount.takeIf { it > 0 }?.let {
 				(0 until it).mapNotNull { i -> exoPlayer.getMediaItemAt(i) }
 			} ?: emptyList(),
-			currentTrack = exoPlayer.currentMediaItem,
+			currentMediaItem = exoPlayer.currentMediaItem,
 			isBuffering = isBuffering,
 			hasEnded = hasEnded
 		)

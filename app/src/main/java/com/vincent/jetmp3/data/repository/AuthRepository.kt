@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.data.repositories
+package com.vincent.jetmp3.data.repository
 
 import android.app.Application
 import android.util.Log

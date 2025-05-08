@@ -180,8 +180,7 @@ fun SongListScreen(
 			LazyColumn(
 				modifier = Modifier
 					.fillMaxSize()
-					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp))
-					.padding(horizontal = 4.dp),
+					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp)),
 				contentPadding = PaddingValues(
 					top = 12.dp,
 					bottom = 150.dp
@@ -227,6 +226,7 @@ fun SongListScreen(
 					Card(
 						modifier = Modifier
 							.fillMaxWidth()
+							.padding(horizontal = 8.dp)
 							.clickable {
 								viewModel.onUiEvent(UIEvent.SelectedAudioChange(index))
 								onItemClick()
@@ -238,7 +238,7 @@ fun SongListScreen(
 						Row(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(12.dp),
+								.padding(8.dp),
 							verticalAlignment = Alignment.CenterVertically,
 							horizontalArrangement = Arrangement.SpaceBetween
 						) {

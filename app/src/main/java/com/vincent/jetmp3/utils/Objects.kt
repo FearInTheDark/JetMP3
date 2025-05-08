@@ -1,6 +1,7 @@
 package com.vincent.jetmp3.utils
 
 import androidx.media3.common.MediaItem
+import com.vincent.jetmp3.domain.models.Track
 
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
@@ -28,7 +29,9 @@ data class PlaybackState (
     val duration: Long = 0L,
     val bufferedPosition: Long = 0L,
     val trackList: List<MediaItem> = emptyList(),
-    val currentTrack: MediaItem? = null,
+    val currentMediaItem: MediaItem? = null,
+    val queue: List<Track> = emptyList(),
+    val currentTrack: Track? = null,
     val isBuffering: Boolean = false,
     val hasEnded: Boolean = false
 )

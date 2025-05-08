@@ -14,11 +14,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.LabelLineBold
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 
@@ -31,14 +36,21 @@ fun RecentlyPlayedItem(
 			.width(160.dp)
 			.clickable(onClick = onClick)
 	) {
-		// Album cover
 		Box(
 			modifier = Modifier
 				.size(160.dp)
+				.shadow(
+					elevation = 4.dp,
+					shape = RoundedCornerShape(4.dp),
+					clip = false
+				)
 				.background(Color(0xFFFFD700), RoundedCornerShape(4.dp))
 		) {
 			AsyncImage(
-				model = "https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd",
+				model = ImageRequest.Builder(LocalContext.current)
+					.data("https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd")
+					.crossfade(true).build(),
+				fallback = painterResource(R.drawable.logos__google_bard_icon),
 				contentDescription = "Image",
 				contentScale = ContentScale.Crop,
 				modifier = Modifier
