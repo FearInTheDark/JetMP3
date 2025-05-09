@@ -22,8 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +34,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,26 +47,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.vincent.jetmp3.R
-import com.vincent.jetmp3.data.models.AudioFile
+import com.vincent.jetmp3.data.constants.UIEvent
+import com.vincent.jetmp3.data.constants.UIState
 import com.vincent.jetmp3.ui.components.home.RecentCategory
 import com.vincent.jetmp3.ui.components.home.RecentScroll
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
-import com.vincent.jetmp3.ui.theme.LabelLineBold
+import com.vincent.jetmp3.ui.theme.LabelLineMedium
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.HomeViewModel
-import com.vincent.jetmp3.ui.viewmodels.UIEvent
-import com.vincent.jetmp3.ui.viewmodels.UIState
 import com.vincent.jetmp3.utils.RecentCategoryItem
 import kotlinx.coroutines.launch
 import okhttp3.internal.concurrent.formatDuration
@@ -82,10 +82,14 @@ fun SongListScreen(
 	onItemClick: () -> Unit,
 	action: () -> Unit = {}
 ) {
+
 	val coroutineScope = rememberCoroutineScope()
-	val audioFiles: List<AudioFile> by viewModel.localAudioList.collectAsState()
-	val refreshing = remember(viewModel.uiState) {
-		viewModel.uiState.value == UIState.Fetching
+	val playbackState by viewModel.playbackState.collectAsState()
+
+	val refreshing by remember(viewModel.uiState) {
+		derivedStateOf {
+			viewModel.uiState.value == UIState.Fetching
+		}
 	}
 	var dropdownShow by remember { mutableStateOf(false) }
 	val context = LocalContext.current
@@ -222,77 +226,87 @@ fun SongListScreen(
 					Spacer(Modifier.height(8.dp))
 				}
 
-				itemsIndexed(audioFiles) { index, audioFile ->
-					Card(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(horizontal = 8.dp)
-							.clickable {
-								viewModel.onUiEvent(UIEvent.SelectedAudioChange(index))
-								onItemClick()
-							},
-						shape = RoundedCornerShape(12.dp),
-						colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-						elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-					) {
-						Row(
+				if (playbackState.queue.isEmpty()) {
+					item {
+						Box(
+							modifier = Modifier.fillMaxWidth(),
+							contentAlignment = Alignment.Center
+						) {
+							Text("Đang tải danh sách bài hát...", color = MaterialTheme.colorScheme.onSurface)
+						}
+					}
+				} else {
+					itemsIndexed(playbackState.queue) { index, track ->
+						Box(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(8.dp),
-							verticalAlignment = Alignment.CenterVertically,
-							horizontalArrangement = Arrangement.SpaceBetween
+								.padding(horizontal = 8.dp)
+								.clickable {
+									viewModel.onUiEvent(UIEvent.SelectedAudioChange(index))
+									onItemClick()
+								},
 						) {
 							Row(
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(4.dp),
 								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.spacedBy(12.dp)
+								horizontalArrangement = Arrangement.SpaceBetween
 							) {
-								Box(
-									modifier = Modifier
-										.size(48.dp)
-										.background(
-											MaterialTheme.colorScheme.secondaryContainer,
-											RoundedCornerShape(8.dp)
-										)
+								Row(
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.spacedBy(12.dp)
 								) {
-									// Placeholder for album art or song icon
-									AsyncImage(
-										model = ImageRequest.Builder(context)
-											.data("https://picsum.photos/500/500").build(),
-										contentDescription = null,
+									Box(
 										modifier = Modifier
-											.clip(RoundedCornerShape(4.dp))
-											.align(Alignment.Center),
-										contentScale = ContentScale.Crop,
-									)
+											.size(50.dp)
+									) {
+										// Placeholder for album art or song icon
+										AsyncImage(
+											model = ImageRequest.Builder(context)
+												.data(track.images.first()).build(),
+											fallback = painterResource(R.drawable.material_icon_theme__gemini_ai),
+											contentDescription = null,
+											modifier = Modifier
+												.clip(RoundedCornerShape(4.dp))
+												.align(Alignment.Center),
+											contentScale = ContentScale.Crop,
+										)
+									}
+
+									Column(
+										verticalArrangement = Arrangement.spacedBy(2.dp),
+										modifier = Modifier.widthIn(max = 220.dp)
+									) {
+										Text(
+											text = track.name,
+											style = LabelLineMedium,
+											fontWeight = FontWeight.Normal,
+											color = MaterialTheme.colorScheme.onSurface,
+											maxLines = 1,
+											overflow = TextOverflow.Ellipsis
+										)
+										Text(
+											text = track.artistType.name,
+											style = LabelLineSmall,
+											color = MaterialTheme.colorScheme.onSurfaceVariant,
+											maxLines = 1,
+											overflow = TextOverflow.Ellipsis
+										)
+									}
 								}
 
-								Column(
-									verticalArrangement = Arrangement.spacedBy(2.dp),
-									modifier = Modifier.widthIn(max = 220.dp)
+								// Optional: Duration or play icon
+								IconButton(
+									onClick = {}
 								) {
-									Text(
-										text = audioFile.displayName,
-										style = LabelLineBold,
-										color = MaterialTheme.colorScheme.onSurface,
-										maxLines = 1,
-										overflow = TextOverflow.Ellipsis
-									)
-									Text(
-										text = audioFile.artist,
-										style = LabelLineSmall,
-										color = MaterialTheme.colorScheme.onSurfaceVariant,
-										maxLines = 1,
-										overflow = TextOverflow.Ellipsis
+									Icon(
+										imageVector = Icons.Default.MusicNote,
+										contentDescription = null,
+										tint = MaterialTheme.colorScheme.onSurface
 									)
 								}
 							}
-
-							// Optional: Duration or play icon
-							Text(
-								text = formatDuration(audioFile.duration),
-								style = MaterialTheme.typography.labelMedium,
-								color = MaterialTheme.colorScheme.onSurfaceVariant
-							)
 						}
 					}
 				}

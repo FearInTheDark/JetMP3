@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -57,34 +58,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.vincent.jetmp3.R
-import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
-import com.vincent.jetmp3.ui.viewmodels.UIState
+import com.vincent.jetmp3.ui.viewmodels.NowPlayingBarViewModel
 import com.vincent.jetmp3.utils.mixColors
 import kotlin.math.abs
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun NowPlayingBar(
-	audioViewModel: AudioViewModel = hiltViewModel(),
+	viewModel: NowPlayingBarViewModel = hiltViewModel(),
 	onClick: () -> Unit
 ) {
-	val uiState by audioViewModel.uiState.collectAsState()
-	val currentSong by audioViewModel.currentSelectedAudio.collectAsState()
-	val progress by audioViewModel.progress.collectAsState()
+	val playbackState by viewModel.playbackState.collectAsState()
 	var dominantColor by remember { mutableStateOf(Color.Gray) }
-	var barVisible by remember(uiState) {
-		mutableStateOf(uiState is UIState.Playing || uiState is UIState.Pausing)
+	var barVisible by remember(playbackState.isPlaying) {
+		mutableStateOf(playbackState.isPlaying)
 	}
 
-	LaunchedEffect(currentSong) {
-		dominantColor = audioViewModel.getDominantColor()
+	LaunchedEffect(playbackState.currentTrack) {
+		dominantColor = viewModel.getDominantColor()
 	}
 
 	val animatedColor by animateColorAsState(
 		targetValue = dominantColor,
 		animationSpec = tween(durationMillis = 1000, easing = { it }),
-		label = "Animated NowPlayingBar Color"// 1000ms duration for the animation
+		label = "Animated NowPlayingBar Color"
 	)
 
 	AnimatedVisibility(
@@ -132,6 +131,7 @@ fun NowPlayingBar(
 						if (y > 0) {
 							if (abs(y) > 10.dp.toPx()) {
 								barVisible = false
+								viewModel.pause()
 							}
 						} else if (y < 0) {
 							if (abs(y) > 10.dp.toPx()) {
@@ -154,9 +154,9 @@ fun NowPlayingBar(
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
 					AsyncImage(
-						model = currentSong?.imageSource,
-						contentDescription = "Song Label",
+						model = ImageRequest.Builder(LocalContext.current).data(playbackState.currentTrack?.images?.first()).build(),
 						fallback = painterResource(R.drawable.material_icon_theme__gemini_ai),
+						contentDescription = "Song Label",
 						contentScale = ContentScale.Crop,
 						modifier = Modifier
 							.width(44.dp)
@@ -172,7 +172,7 @@ fun NowPlayingBar(
 							.padding(2.dp)
 					) {
 						Text(
-							text = currentSong?.title ?: "Unknown",
+							text = playbackState.currentTrack?.name ?: "Unknown",
 							fontFamily = FontFamily(Font(R.font.spotifymixui_bold)),
 							color = Color.White,
 							fontWeight = FontWeight.Bold,
@@ -187,7 +187,7 @@ fun NowPlayingBar(
 
 						Text(
 //							text = currentSong?.artist ?: "Taylor Swift",
-							text = audioViewModel.uiState.value.javaClass.simpleName,
+							text = playbackState.isPlaying.toString(),
 							fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
 							color = Color.White,
 							fontSize = 12.sp,
@@ -222,7 +222,7 @@ fun NowPlayingBar(
 			)
 
 			LinearProgressIndicator(
-				progress = { progress / 100f },
+				progress = { playbackState.progress / 100f },
 				drawStopIndicator = {},
 				modifier = Modifier
 					.align(Alignment.BottomCenter)

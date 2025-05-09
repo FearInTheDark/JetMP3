@@ -32,7 +32,6 @@ fun AudioFile.toMediaItem(): MediaItem {
 				.setTitle(this.title)
 				.setArtist(this.artist)
 				.setExtras(Bundle().apply {
-					putString("data", this@toMediaItem.data)
 					putString("type", this@toMediaItem.type)
 				})
 				.build()

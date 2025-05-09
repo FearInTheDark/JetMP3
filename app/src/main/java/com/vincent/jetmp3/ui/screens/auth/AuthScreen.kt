@@ -80,18 +80,20 @@ fun AuthScreen(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.background(Brush.verticalGradient(
-				colors = listOf(
-					Color(0xFF1DB954).copy(0.8f),
-					Color(0xFF1DB954).copy(0.4f),
-					MaterialTheme.colorScheme.surface,
-					MaterialTheme.colorScheme.surface,
-					MaterialTheme.colorScheme.surface,
-					MaterialTheme.colorScheme.surface,
-					MaterialTheme.colorScheme.surface,
-				),
-				tileMode = TileMode.Clamp,
-			))
+			.background(
+				Brush.verticalGradient(
+					colors = listOf(
+						Color(0xFF1DB954).copy(0.8f),
+						Color(0xFF1DB954).copy(0.4f),
+						MaterialTheme.colorScheme.surface,
+						MaterialTheme.colorScheme.surface,
+						MaterialTheme.colorScheme.surface,
+						MaterialTheme.colorScheme.surface,
+						MaterialTheme.colorScheme.surface,
+					),
+					tileMode = TileMode.Clamp,
+				)
+			)
 			.blur(if (shouldBlur) 8.dp else 0.dp)
 			.padding(horizontal = 24.dp)
 	) {

@@ -30,7 +30,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,7 +42,6 @@ import com.vincent.jetmp3.ui.components.navigation.MyNavigationBar
 import com.vincent.jetmp3.ui.components.navigation.NowPlayingBar
 import com.vincent.jetmp3.ui.screens.auth.AuthScreen
 import com.vincent.jetmp3.ui.screens.auth.AuthWelcome
-import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.utils.Screen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -145,7 +143,6 @@ fun AppScreen(
 
 @Composable
 fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
-	val audioViewModel = hiltViewModel<AudioViewModel>()
 	NavHost(
 		navController = navController,
 		startDestination = Screen.AuthWelcome.route,
@@ -162,15 +159,6 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 					)
 				)
 			},
-			exitTransition = {
-				slideOutOfContainer(
-					towards = AnimatedContentTransitionScope.SlideDirection.Left,
-					animationSpec = tween(
-						durationMillis = 500,
-						delayMillis = 10
-					)
-				)
-			}
 		) {
 			AuthWelcome(
 				onSignInAction = { navController.navigate(Screen.Auth.route) },
@@ -260,11 +248,10 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 			}
 		) {
 			SongListScreen(
-				audioViewModel,
 				onItemClick = onItemClick,
 				action = {
 					navController.navigate(Screen.AuthWelcome.route) {
-						popUpTo(navController.graph.startDestinationId) { inclusive = true }
+						popUpTo(Screen.Home.route) { inclusive = true }
 						launchSingleTop = true
 					}
 				})
@@ -299,8 +286,7 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				)
 			}
 		) {
-//			PlayingScreen()
-			PlayingScreen(audioViewModel) {
+			PlayingScreen {
 				navController.navigateUp()
 			}
 		}

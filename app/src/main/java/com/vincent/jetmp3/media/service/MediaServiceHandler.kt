@@ -1,20 +1,19 @@
 package com.vincent.jetmp3.media.service
 
-import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.vincent.jetmp3.data.models.AudioFile
+import com.vincent.jetmp3.domain.models.Track
 import com.vincent.jetmp3.utils.PlaybackState
-import com.vincent.jetmp3.utils.functions.string
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,6 +29,7 @@ class MediaServiceHandler @Inject constructor(
 	val playbackState = _playbackState.asStateFlow()
 
 	private var job: Job? = null
+	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
 	init {
 		exoPlayer.addListener(this)
@@ -38,17 +38,17 @@ class MediaServiceHandler @Inject constructor(
 	fun setMediaItem(mediaItem: MediaItem) {
 		exoPlayer.setMediaItem(mediaItem)
 		exoPlayer.prepare()
-		Log.d("MediaServiceHandler", "setMediaItem: ${mediaItem.string()}")
 		exoPlayer.play()
 	}
 
-	fun setMediaItemList(mediaItems: List<MediaItem>) {
-		exoPlayer.setMediaItems(mediaItems)
+	fun setMediaItemList(tracks: List<Track>) {
+		val items = tracks.map { it.toMediaItem() }
+		_playbackState.value = _playbackState.value.copy(
+			queue = tracks,
+			trackList = items
+		)
+		exoPlayer.setMediaItems(items)
 		exoPlayer.prepare()
-	}
-
-	fun setAudioFileQueue(items: List<AudioFile>) {
-
 	}
 
 	suspend fun onPlayerEvents(
@@ -93,12 +93,11 @@ class MediaServiceHandler @Inject constructor(
 		updatePlaybackState()
 	}
 
-	@OptIn(DelicateCoroutinesApi::class)
 	override fun onIsPlayingChanged(isPlaying: Boolean) {
 		_playerState.value = PlayerState.Playing(isPlaying = isPlaying)
 		_playerState.value = PlayerState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
 		if (isPlaying) {
-			GlobalScope.launch(Dispatchers.Main) {
+			scope.launch {
 				startProgressUpdate()
 			}
 		} else {
@@ -139,7 +138,7 @@ class MediaServiceHandler @Inject constructor(
 		isBuffering: Boolean = exoPlayer.playbackState == ExoPlayer.STATE_BUFFERING,
 		hasEnded: Boolean = exoPlayer.playbackState == ExoPlayer.STATE_ENDED
 	) {
-		_playbackState.value = PlaybackState(
+		_playbackState.value = _playbackState.value.copy(
 			isPlaying = isPlaying,
 			currentIndex = exoPlayer.currentMediaItemIndex,
 			currentPosition = exoPlayer.currentPosition,
@@ -152,11 +151,11 @@ class MediaServiceHandler @Inject constructor(
 			isBuffering = isBuffering,
 			hasEnded = hasEnded
 		)
-
-		Log.d("MediaServiceHandler", "_playbackState: ${_playbackState.value}")
-
 	}
 
+	fun updatePlaybackState(update: PlaybackState.() -> PlaybackState) {
+		_playbackState.update { it.update() }
+	}
 }
 
 sealed class PlayerEvent {

@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NowPlayingBarViewModel @Inject constructor(
+class PlayingViewModel @Inject constructor(
 	private val mediaServiceHandler: MediaServiceHandler,
 	private val imagePaletteService: ImagePaletteService
 ) : ViewModel() {
@@ -24,11 +24,20 @@ class NowPlayingBarViewModel @Inject constructor(
 
 	init {
 		// Init log
-		Log.d("Initialization", "NowPlayingBarViewModel initialized")
+		Log.d("Initialization", "PlayingViewModel initialized")
 	}
 
+	fun playOrPause() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.PlayPause) }
 
-	fun pause() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.PlayPause) }
+	fun forward() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.Forward) }
+
+	fun backward() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.Backward) }
+
+	fun seekToNext() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.SeekToNext) }
+
+	fun seekToPrevious() = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.SeekToPrevious) }
+
+	fun updateProgress(newProgress: Float) = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.UpdateProgress(newProgress)) }
 
 	suspend fun getDominantColor(imageUrl: String? = null): Color {
 		val selectedAudio = playbackState.value.currentTrack ?: return Color.Gray
@@ -38,10 +47,8 @@ class NowPlayingBarViewModel @Inject constructor(
 				delay(300)
 				imagePaletteService.getPalette(VibrantRequest(imageUrl ?: selectedAudio.images.first()))
 			}.await().muted
-			Log.d("TAG", "getDominantColor: $rgb")
 			return paletteToColor(rgb)
 		} catch (e: Exception) {
-			Log.e("TAG", "getDominantColor: ${e.message}")
 			return Color.Gray
 		}
 

@@ -1,6 +1,5 @@
 package com.vincent.jetmp3.ui.components.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,11 +43,10 @@ fun RecentlyPlayedItem(
 					shape = RoundedCornerShape(4.dp),
 					clip = false
 				)
-				.background(Color(0xFFFFD700), RoundedCornerShape(4.dp))
 		) {
 			AsyncImage(
 				model = ImageRequest.Builder(LocalContext.current)
-					.data("https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd")
+					.data("https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg")
 					.crossfade(true).build(),
 				fallback = painterResource(R.drawable.logos__google_bard_icon),
 				contentDescription = "Image",

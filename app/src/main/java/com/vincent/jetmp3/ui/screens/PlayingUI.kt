@@ -73,25 +73,23 @@ import com.vincent.jetmp3.ui.theme.DarkSurface
 import com.vincent.jetmp3.ui.theme.HeadLineMedium
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
-import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
-import com.vincent.jetmp3.ui.viewmodels.UIEvent
+import com.vincent.jetmp3.ui.viewmodels.PlayingViewModel
 import com.vincent.jetmp3.utils.mixColors
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayingScreen(
-	viewModel: AudioViewModel = hiltViewModel(),
+	viewModel: PlayingViewModel = hiltViewModel(),
 	onTopAppClick: () -> Unit = {}
 ) {
+	val isSystemInDarkTheme = isSystemInDarkTheme()
 
-	val currentSong by viewModel.currentSelectedAudio.collectAsState()
-	val isPlaying by viewModel.isPlaying.collectAsState()
-	val progress by viewModel.progress.collectAsState()
-	val progressString by viewModel.progressString.collectAsState()
+	val playbackState by viewModel.playbackState.collectAsState()
+	val progressString by remember { mutableStateOf("00:00") }
+
 	var sliderProgress by remember { mutableFloatStateOf(0f) }
 	var isUserSeeking by remember { mutableStateOf(false) }
-	val isSystemInDarkTheme = isSystemInDarkTheme()
 	var ambientColor by remember { mutableStateOf(Color.Gray) }
 
 	val standardBottomSheet = rememberStandardBottomSheetState(
@@ -122,12 +120,12 @@ fun PlayingScreen(
 		}
 	}
 
-	LaunchedEffect(currentSong) {
+	LaunchedEffect(playbackState.currentTrack) {
 		ambientColor = viewModel.getDominantColor()
 	}
 
-	LaunchedEffect(progress) {
-		animProgress.animateTo(progress, animationSpec = tween(500))
+	LaunchedEffect(playbackState.progress) {
+		animProgress.animateTo(playbackState.progress, animationSpec = tween(500))
 	}
 
 	val infiniteTransition = rememberInfiniteTransition(label = "albumPulse")
@@ -202,136 +200,134 @@ fun PlayingScreen(
 		},
 		sheetPeekHeight = 36.dp,
 		content = @Composable { innerPadding ->
-			LazyColumn {
-				item {
-					Column(
-						modifier = Modifier
-							.background(
-								Brush.verticalGradient(
-									startY = 0f,
-									endY = Float.POSITIVE_INFINITY,
-									colors = listOf(
-										mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.2f)),
-										mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.4f)),
-										mixColors(arrayOf(containerColor to 0.2f, MaterialTheme.colorScheme.surface to 0.8f))
-									)
-								)
+			Column(
+				modifier = Modifier
+					.background(
+						Brush.verticalGradient(
+							startY = 0f,
+							endY = Float.POSITIVE_INFINITY,
+							colors = listOf(
+								mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.2f)),
+								mixColors(arrayOf(containerColor to 0.8f, MaterialTheme.colorScheme.surface to 0.4f)),
+								mixColors(arrayOf(containerColor to 0.2f, MaterialTheme.colorScheme.surface to 0.8f))
 							)
-							.padding(innerPadding),
-						horizontalAlignment = Alignment.CenterHorizontally,
-						verticalArrangement = Arrangement.Top
+						)
+					)
+					.padding(innerPadding),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.Top
+			) {
+				playbackState.currentTrack?.let {
+					Box(
+						Modifier
+							.fillMaxSize()
+							.padding(4.dp),
+						contentAlignment = Alignment.Center
 					) {
-						currentSong?.let {
-							Box(
+
+						Column(
+							Modifier
+								.fillMaxSize()
+								.padding(horizontal = 8.dp),
+							verticalArrangement = Arrangement.Center,
+							horizontalAlignment = Alignment.CenterHorizontally
+						) {
+							AsyncImage(
+								model = "https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg",
+								contentDescription = "Image",
+								contentScale = ContentScale.Crop,
+								modifier = Modifier
+									.scale(if (playbackState.isPlaying) albumScale else 1f)
+									.shadow(
+										elevation = 100.dp,
+										clip = false,
+										shape = RoundedCornerShape(10.dp),
+										ambientColor = animatedColor,
+										spotColor = animatedColor
+									)
+									.clip(RoundedCornerShape(10.dp))
+									.fillMaxWidth(0.95f)
+									.aspectRatio(1f)
+									.combinedClickable(
+										onClick = {},
+										onLongClick = {
+											scope.launch {
+												when (bottomSheetScaffoldState.bottomSheetState.currentValue) {
+													SheetValue.Hidden -> bottomSheetScaffoldState.bottomSheetState.expand()
+													SheetValue.PartiallyExpanded -> bottomSheetScaffoldState.bottomSheetState.expand()
+													SheetValue.Expanded -> bottomSheetScaffoldState.bottomSheetState.hide()
+												}
+											}
+										}
+									)
+
+							)
+
+							Spacer(Modifier.height(24.dp))
+
+							Row(
 								Modifier
-									.fillMaxSize()
-									.padding(4.dp),
-								contentAlignment = Alignment.Center
+									.fillMaxWidth()
+									.padding(6.dp),
+								Arrangement.SpaceBetween,
+								Alignment.CenterVertically
 							) {
+								Column(
+									modifier = Modifier
+										.fillMaxWidth(0.75f)
+										.padding(2.dp),
+									verticalArrangement = Arrangement.Center,
+									horizontalAlignment = Alignment.Start
+								) {
+									Text(
+										text = playbackState.currentTrack!!.name,
+										style = HeadLineMedium,
+										color = MaterialTheme.colorScheme.onSurface,
+										modifier = Modifier.basicMarquee()
+									)
+
+									Text(
+										text = playbackState.currentTrack!!.artistType.name,
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface
+									)
+								}
 
 								Column(
 									Modifier
-										.fillMaxSize()
-										.padding(horizontal = 8.dp),
+										.wrapContentSize()
+										.padding(2.dp),
 									verticalArrangement = Arrangement.Center,
+									horizontalAlignment = Alignment.End
+								) {
+									Text(
+										text = playbackState.progress.toString(),
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface,
+										softWrap = false
+									)
+									Text(
+										text = bottomSheetScaffoldState.bottomSheetState.currentValue.toString(),
+										style = MaterialTheme.typography.labelMedium,
+										color = MaterialTheme.colorScheme.onSurface,
+										overflow = TextOverflow.Ellipsis,
+										maxLines = 1,
+										softWrap = false,
+									)
+								}
+							}
+
+							Spacer(Modifier.height(12.dp))
+
+							Box(
+								Modifier
+									.fillMaxWidth()
+									.wrapContentSize(),
+								contentAlignment = Alignment.Center
+							) {
+								Column(
 									horizontalAlignment = Alignment.CenterHorizontally
 								) {
-									AsyncImage(
-										model = "https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd",
-										contentDescription = "Image",
-										contentScale = ContentScale.Crop,
-										modifier = Modifier
-											.scale(if (isPlaying) albumScale else 1f)
-											.shadow(
-												elevation = 100.dp,
-												clip = false,
-												shape = RoundedCornerShape(10.dp),
-												ambientColor = animatedColor,
-												spotColor = animatedColor
-											)
-											.clip(RoundedCornerShape(10.dp))
-											.fillMaxWidth(0.95f)
-											.aspectRatio(1f)
-											.combinedClickable(
-												onClick = {},
-												onLongClick = {
-													scope.launch {
-														when (bottomSheetScaffoldState.bottomSheetState.currentValue) {
-															SheetValue.Hidden -> bottomSheetScaffoldState.bottomSheetState.expand()
-															SheetValue.PartiallyExpanded -> bottomSheetScaffoldState.bottomSheetState.expand()
-															SheetValue.Expanded -> bottomSheetScaffoldState.bottomSheetState.hide()
-														}
-													}
-												}
-											)
-
-									)
-
-									Spacer(Modifier.height(24.dp))
-
-									Row(
-										Modifier
-											.fillMaxWidth()
-											.padding(6.dp),
-										Arrangement.SpaceBetween,
-										Alignment.CenterVertically
-									) {
-										Column(
-											modifier = Modifier
-												.fillMaxWidth(0.75f)
-												.padding(2.dp),
-											verticalArrangement = Arrangement.Center,
-											horizontalAlignment = Alignment.Start
-										) {
-											Text(
-												text = currentSong!!.title,
-												style = HeadLineMedium,
-												color = MaterialTheme.colorScheme.onSurface,
-												modifier = Modifier.basicMarquee()
-											)
-
-											Text(
-												text = currentSong!!.artist,
-												style = MaterialTheme.typography.labelMedium,
-												color = MaterialTheme.colorScheme.onSurface
-											)
-										}
-
-										Column(
-											Modifier
-												.wrapContentSize()
-												.padding(2.dp),
-											verticalArrangement = Arrangement.Center,
-											horizontalAlignment = Alignment.End
-										) {
-											Text(
-												text = progress.toString(),
-												style = MaterialTheme.typography.labelMedium,
-												color = MaterialTheme.colorScheme.onSurface,
-												softWrap = false
-											)
-											Text(
-												text = bottomSheetScaffoldState.bottomSheetState.currentValue.toString(),
-												style = MaterialTheme.typography.labelMedium,
-												color = MaterialTheme.colorScheme.onSurface,
-												overflow = TextOverflow.Ellipsis,
-												maxLines = 1,
-												softWrap = false,
-											)
-										}
-									}
-
-									Spacer(Modifier.height(12.dp))
-
-									Box(
-										Modifier
-											.fillMaxWidth()
-											.wrapContentSize(),
-										contentAlignment = Alignment.Center
-									) {
-										Column(
-											horizontalAlignment = Alignment.CenterHorizontally
-										) {
 //							LinearProgressIndicator(
 //								progress = { progressFloat },
 //								color = Color.White,
@@ -340,111 +336,111 @@ fun PlayingScreen(
 //									.height(4.dp),
 //							)
 
-											Slider(
-												value = if (isUserSeeking) sliderProgress else progress,
-												onValueChange = {
-													sliderProgress = it
-													isUserSeeking = true
-												},
-												onValueChangeFinished = {
-													viewModel.onUiEvent(UIEvent.UpdateProgress(sliderProgress / 100))
-													isUserSeeking = false
-												},
-												valueRange = 0f..100f,
-												enabled = true,
-												modifier = Modifier
-													.fillMaxWidth()
-													.height(4.dp),
-												colors = SliderDefaults.colors(
-													activeTrackColor = MaterialTheme.colorScheme.onSurface,
-													inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(
-														0.2f
-													),
-													thumbColor = MaterialTheme.colorScheme.onSurface,
-													disabledActiveTrackColor = MaterialTheme.colorScheme.onSurface,
-												),
-											)
+									Slider(
+										value = if (isUserSeeking) sliderProgress else animProgress.value,
+										onValueChange = {
+											sliderProgress = it
+											isUserSeeking = true
+										},
+										onValueChangeFinished = {
+											viewModel.updateProgress(sliderProgress / 100)
+											isUserSeeking = false
+										},
+										valueRange = 0f..100f,
+										enabled = true,
+										modifier = Modifier
+											.fillMaxWidth()
+											.height(4.dp),
+										colors = SliderDefaults.colors(
+											activeTrackColor = MaterialTheme.colorScheme.onSurface,
+											inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(
+												0.2f
+											),
+											thumbColor = MaterialTheme.colorScheme.onSurface,
+											disabledActiveTrackColor = MaterialTheme.colorScheme.onSurface,
+										),
+									)
 
-											Spacer(Modifier.height(4.dp))
+									Spacer(Modifier.height(4.dp))
 
-											Row(
-												Modifier
-													.fillMaxWidth(0.95f)
-													.padding(
-														vertical = 4.dp,
-														horizontal = 4.dp
-													),
-												verticalAlignment = Alignment.CenterVertically,
-												horizontalArrangement = Arrangement.SpaceBetween,
-											) {
-												Text(
+									Row(
+										Modifier
+											.fillMaxWidth(0.95f)
+											.padding(
+												vertical = 4.dp,
+												horizontal = 4.dp
+											),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
 //									text = durationToString(progress),
-													text = "1:00",
-													color = MaterialTheme.colorScheme.onSurface,
-													style = LabelLineSmall
-												)
-												Text(
+											text = "1:00",
+											color = MaterialTheme.colorScheme.onSurface,
+											style = LabelLineSmall
+										)
+										Text(
 //									text = durationToString(currentSong?.duration),
-													text = progressString,
-													color = MaterialTheme.colorScheme.onSurface,
-													style = LabelLineSmall
-												)
-											}
+											text = progressString,
+											color = MaterialTheme.colorScheme.onSurface,
+											style = LabelLineSmall
+										)
+									}
+								}
+							}
+
+							Box(
+								Modifier.fillMaxWidth(),
+								contentAlignment = Alignment.Center
+							) {
+								Row(
+									horizontalArrangement = Arrangement.spacedBy(28.dp),
+									verticalAlignment = Alignment.CenterVertically,
+								) {
+									IconButton(
+										onClick = { viewModel.seekToPrevious() }
+									) {
+										Icon(
+											painter = painterResource(R.drawable.mage__previous_fill),
+											contentDescription = "previous",
+											modifier = Modifier.size(32.dp),
+										)
+									}
+									Box {
+										IconButton(
+											onClick = { viewModel.playOrPause() },
+											modifier = Modifier
+												.size(80.dp)
+												.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+										) {
+											Icon(
+												painter = painterResource(
+													if (playbackState.isPlaying) R.drawable.solar__pause_bold
+													else R.drawable.solar__play_bold
+												),
+												contentDescription = "play",
+												modifier = Modifier.size(32.dp),
+												tint = MaterialTheme.colorScheme.surface
+											)
 										}
 									}
-
-									Box(
-										Modifier.fillMaxWidth(),
-										contentAlignment = Alignment.Center
+									IconButton(
+										onClick = { viewModel.seekToNext() }
 									) {
-										Row(
-											horizontalArrangement = Arrangement.spacedBy(28.dp),
-											verticalAlignment = Alignment.CenterVertically,
-										) {
-											IconButton(
-												onClick = { viewModel.onUiEvent(UIEvent.SeekToPrevious) }
-											) {
-												Icon(
-													painter = painterResource(R.drawable.mage__previous_fill),
-													contentDescription = "previous",
-													modifier = Modifier.size(32.dp),
-												)
-											}
-											Box {
-												IconButton(
-													onClick = {
-														viewModel.onUiEvent(UIEvent.PlayPause)
-													},
-													modifier = Modifier
-														.size(80.dp)
-														.background(MaterialTheme.colorScheme.onSurface, CircleShape)
-												) {
-													Icon(
-														painter = painterResource(
-															if (isPlaying) R.drawable.solar__pause_bold
-															else R.drawable.solar__play_bold
-														),
-														contentDescription = "play",
-														modifier = Modifier.size(32.dp),
-														tint = MaterialTheme.colorScheme.surface
-													)
-												}
-											}
-											IconButton(
-												onClick = { viewModel.onUiEvent(UIEvent.SeekToNext) },
-											) {
-												Icon(
-													painter = painterResource(R.drawable.mage__next_fill),
-													contentDescription = "next",
-													modifier = Modifier.size(32.dp),
-												)
-											}
-										}
+										Icon(
+											painter = painterResource(R.drawable.mage__next_fill),
+											contentDescription = "next",
+											modifier = Modifier.size(32.dp),
+										)
 									}
 								}
 							}
 						}
 					}
+				}
+			}
+			LazyColumn {
+				item {
 				}
 			}
 		}

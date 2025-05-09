@@ -54,7 +54,7 @@ class MyNotificationManager @Inject constructor(
 				pendingIntent = mediaSession.sessionActivity
 			)
 		)
-			.setSmallIconResourceId(R.drawable.logos__spotify_icon)
+			.setSmallIconResourceId(R.drawable.logos__google_bard_icon)
 			.build()
 			.also {
 				it.setMediaSessionToken(mediaSession.platformToken)

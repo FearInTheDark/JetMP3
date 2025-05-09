@@ -8,11 +8,10 @@ import kotlinx.parcelize.Parcelize
 data class AudioFile(
 	val id: Long,
 	val uri: Uri,
-	val data: String,
 	val displayName: String,
 	val title: String,
 	val artist: String,
 	val duration: Long,
-	val imageSource: String = "https://picsum.photos/500/500",
+	val artworkUri: String = "https://picsum.photos/500/500",
 	val type: String = "local",
 ) : Parcelable

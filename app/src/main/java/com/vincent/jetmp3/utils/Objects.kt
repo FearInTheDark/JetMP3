@@ -23,17 +23,18 @@ data class NavigationBarItem(
 )
 
 data class PlaybackState (
-    val isPlaying: Boolean = false,
-    val currentIndex: Int = 0,
-    val currentPosition: Long = 0L,
-    val duration: Long = 0L,
-    val bufferedPosition: Long = 0L,
-    val trackList: List<MediaItem> = emptyList(),
-    val currentMediaItem: MediaItem? = null,
-    val queue: List<Track> = emptyList(),
-    val currentTrack: Track? = null,
-    val isBuffering: Boolean = false,
-    val hasEnded: Boolean = false
+	var isPlaying: Boolean = false,
+	val currentIndex: Int = 0,
+	val currentPosition: Long = 0L,
+	val duration: Long = 0L,
+	val bufferedPosition: Long = 0L,
+	var progress: Float = 0f,
+	var trackList: List<MediaItem> = emptyList(),
+	val currentMediaItem: MediaItem? = null,
+	var queue: List<Track> = emptyList(),
+	var currentTrack: Track? = null,
+	val isBuffering: Boolean = false,
+	val hasEnded: Boolean = false
 )
 
 data class RecentCategoryItem(

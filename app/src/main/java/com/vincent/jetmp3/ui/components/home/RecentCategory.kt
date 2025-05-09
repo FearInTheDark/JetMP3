@@ -19,14 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.vincent.jetmp3.media.service.MediaServiceHandler
 import com.vincent.jetmp3.ui.theme.LabelLineBold
 import com.vincent.jetmp3.ui.theme.TitleLineBig
@@ -83,9 +81,7 @@ fun RecentCategory(
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					AsyncImage(
-						model = ImageRequest.Builder(LocalContext.current)
-							.data("https://i.scdn.co/image/ab67616d00001e027636e1c9e67eaafc9f49aefd")
-							.crossfade(true).build(),
+						model = "https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg",
 						contentDescription = "Image",
 						contentScale = ContentScale.Crop,
 						modifier = Modifier
@@ -109,11 +105,7 @@ fun RecentCategory(
 class RecentCategoryViewModel @Inject constructor(
 	private val mediaServiceHandler: MediaServiceHandler,
 
-) : ViewModel() {
-
-
-
-
+	) : ViewModel() {
 	fun handle() {
 		mediaServiceHandler.setMediaItem(
 			MediaItem.fromUri("https://res.cloudinary.com/dsy29z79v/video/upload/v1746640209/XGetter_-L%E1%BB%87_L%C6%B0u_Ly_x_Em_M%C3%A2y_-_Huy_PT_Remix_leluuly_huyptremix_nhachaymoinga-20250507174857_lmbttw.mp3")

@@ -1,9 +1,9 @@
 package com.vincent.jetmp3.data.repository
 
 import android.util.Log
-import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.data.resolver.AudioResolverHelper
 import com.vincent.jetmp3.domain.NestService
+import com.vincent.jetmp3.domain.models.Track
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -14,8 +14,8 @@ class AudioRepository @Inject constructor(
 	private val nestService: NestService,
 	private val authRepository: AuthRepository
 ) {
-	suspend fun getLocalAudioData(): List<AudioFile> = withContext(Dispatchers.Main) {
-		audioResolverHelper.getAudioData()
+	suspend fun getLocalTracks(): List<Track> = withContext(Dispatchers.Main) {
+		audioResolverHelper.getLocalTracks()
 	}
 
 	suspend fun getNestAudioData() = withContext(Dispatchers.Main) {

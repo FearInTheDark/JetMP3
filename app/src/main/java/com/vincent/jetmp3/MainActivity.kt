@@ -27,9 +27,6 @@ class MainActivity : ComponentActivity() {
 	@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		val splashScreen = installSplashScreen()
-		splashScreen.setKeepOnScreenCondition {
-			authRepository.authenticating.value
-		}
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {

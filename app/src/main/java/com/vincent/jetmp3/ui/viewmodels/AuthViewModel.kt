@@ -9,6 +9,7 @@ import com.vincent.jetmp3.data.repository.AuthRepository
 import com.vincent.jetmp3.domain.models.request.LoginRequest
 import com.vincent.jetmp3.domain.models.request.SignupRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -35,8 +36,8 @@ class AuthViewModel @Inject constructor(
 	val username: MutableState<String> = _username
 
 	val errorMessage = authRepository.errorMessage
-
 	val authValid = authRepository.authValid
+	val authenticating = authRepository.authenticating
 
 	private fun login() {
 		if (_email.value.isEmpty() || _password.value.isEmpty()) return

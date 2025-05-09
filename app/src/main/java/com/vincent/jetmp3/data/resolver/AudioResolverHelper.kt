@@ -6,8 +6,9 @@ import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.WorkerThread
-import com.vincent.jetmp3.data.models.AudioFile
+import com.vincent.jetmp3.domain.models.Track
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Date
 import javax.inject.Inject
 
 class AudioResolverHelper @Inject constructor(
@@ -37,12 +38,12 @@ class AudioResolverHelper @Inject constructor(
 	private val sortOrder = null
 
 	@WorkerThread
-	fun getAudioData(): List<AudioFile> {
+	fun getLocalTracks(): List<Track> {
 		return getCursorData()
 	}
 
-	private fun getCursorData(): MutableList<AudioFile> {
-		val audioList = mutableListOf<AudioFile>()
+	private fun getCursorData(): MutableList<Track> {
+		val audioList = mutableListOf<Track>()
 
 		cursor = context.contentResolver.query(
 			MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -54,11 +55,7 @@ class AudioResolverHelper @Inject constructor(
 
 		cursor?.use {
 			val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-			val displayNameColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
 			val titleColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-			val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-			val dataColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-			val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
 
 
 			it.apply {
@@ -67,21 +64,15 @@ class AudioResolverHelper @Inject constructor(
 				} else {
 					while (it.moveToNext()) {
 						val id = getLong(idColumn)
-						val displayName = getString(displayNameColumn)
 						val title = getString(titleColumn)
-						val artist = getString(artistColumn)
-						val data = getString(dataColumn)
-						val duration = getLong(durationColumn)
 						val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
-						val audioFile = AudioFile(
+						val audioFile = Track(
 							id = id,
-							uri = uri,
-							data = data,
-							displayName = displayName,
-							title = title,
-							artist = artist,
-							duration = duration
+							name = title,
+							uri = uri.toString(),
+							artistId = "artist",
+							createdAt = Date().toString()
 						)
 
 						Log.d("AudioResolverHelper", "getCursorData: $audioFile")
