@@ -9,6 +9,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.vincent.jetmp3.data.notification.MyNotificationManager
 import com.vincent.jetmp3.media.service.MediaServiceHandler
+import com.vincent.jetmp3.utils.functions.TrackAdditions
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,5 +54,5 @@ object MediaModule {
 
 	@Provides
 	@Singleton
-	fun provideServiceHandler(exoPlayer: ExoPlayer): MediaServiceHandler = MediaServiceHandler(exoPlayer)
+	fun provideServiceHandler(exoPlayer: ExoPlayer, trackAdditions: TrackAdditions): MediaServiceHandler = MediaServiceHandler(exoPlayer, trackAdditions)
 }

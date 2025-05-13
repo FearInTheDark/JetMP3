@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vincent.jetmp3.R
+import com.vincent.jetmp3.ui.layout.LoadingOverlay
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AuthViewModel
@@ -50,7 +50,7 @@ fun AuthWelcome(
 	LaunchedEffect(Unit) {
 		authViewModel.authValid.collect { isValid ->
 			if (isValid) {
-				delay(500)
+				delay(2500)
 				onValidated()
 			}
 		}
@@ -58,7 +58,19 @@ fun AuthWelcome(
 
 	when (authValid) {
 		true -> @Composable {
-			CircularProgressIndicator()
+			Box(
+				Modifier.fillMaxSize(),
+				contentAlignment = Alignment.Center
+			) {
+				LoadingOverlay(
+					isLoading = true,
+					backgroundColor = Color.Transparent,
+					icon = "listening.lottie",
+					iconModifier = Modifier
+						.size(400.dp)
+				)
+
+			}
 		}
 
 		false -> @Composable {
@@ -140,8 +152,6 @@ fun AuthWelcome(
 					}
 				}
 			}
-
 		}
 	}
-
 }

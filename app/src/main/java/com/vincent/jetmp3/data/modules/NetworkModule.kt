@@ -2,7 +2,6 @@ package com.vincent.jetmp3.data.modules
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.vincent.jetmp3.domain.ApiService
 import com.vincent.jetmp3.domain.AuthService
 import com.vincent.jetmp3.domain.ImagePaletteService
 import com.vincent.jetmp3.domain.NestService
@@ -32,14 +31,6 @@ object NetworkModule {
 	fun provideRetrofit(moshi: Moshi): Builder {
 		return Builder()
 			.addConverterFactory(MoshiConverterFactory.create(moshi))
-	}
-
-	@Provides
-	@Singleton
-	fun provideApiService(builder: Builder): ApiService {
-		return builder.baseUrl("https://jsonplaceholder.typicode.com/")
-			.build()
-			.create(ApiService::class.java)
 	}
 
 	@Provides

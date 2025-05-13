@@ -104,11 +104,12 @@ fun RecentCategory(
 @HiltViewModel
 class RecentCategoryViewModel @Inject constructor(
 	private val mediaServiceHandler: MediaServiceHandler,
-
 	) : ViewModel() {
 	fun handle() {
 		mediaServiceHandler.setMediaItem(
-			MediaItem.fromUri("https://res.cloudinary.com/dsy29z79v/video/upload/v1746640209/XGetter_-L%E1%BB%87_L%C6%B0u_Ly_x_Em_M%C3%A2y_-_Huy_PT_Remix_leluuly_huyptremix_nhachaymoinga-20250507174857_lmbttw.mp3")
+			MediaItem.Builder()
+				.setUri("https://res.cloudinary.com/dsy29z79v/video/upload/v1746640209/XGetter_-L%E1%BB%87_L%C6%B0u_Ly_x_Em_M%C3%A2y_-_Huy_PT_Remix_leluuly_huyptremix_nhachaymoinga-20250507174857_lmbttw.mp3")
+				.build()
 		)
 	}
 }

@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayingViewModel @Inject constructor(
 	private val mediaServiceHandler: MediaServiceHandler,
-	private val imagePaletteService: ImagePaletteService
+	private val imagePaletteService: ImagePaletteService,
 ) : ViewModel() {
 	val playbackState = mediaServiceHandler.playbackState
 
@@ -41,12 +41,12 @@ class PlayingViewModel @Inject constructor(
 
 	suspend fun getDominantColor(imageUrl: String? = null): Color {
 		val selectedAudio = playbackState.value.currentTrack ?: return Color.Gray
-
+		Log.d("ImageUrl", "ImageUrl: ${selectedAudio.images.first()}")
 		try {
 			val rgb = viewModelScope.async {
 				delay(300)
 				imagePaletteService.getPalette(VibrantRequest(imageUrl ?: selectedAudio.images.first()))
-			}.await().muted
+			}.await().darkVibrant
 			return paletteToColor(rgb)
 		} catch (e: Exception) {
 			return Color.Gray

@@ -6,7 +6,7 @@ import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.WorkerThread
-import com.vincent.jetmp3.domain.models.Track
+import com.vincent.jetmp3.data.models.Track
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Date
 import javax.inject.Inject

@@ -1,4 +1,4 @@
-package com.vincent.jetmp3.domain.models
+package com.vincent.jetmp3.data.models
 
 data class SpotifyArtist(
 	val externalUrls: ExternalUrls?,

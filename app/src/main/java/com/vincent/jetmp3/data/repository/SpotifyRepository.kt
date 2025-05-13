@@ -10,16 +10,16 @@ import com.vincent.jetmp3.BuildConfig
 import com.vincent.jetmp3.core.annotation.ApplicationScope
 import com.vincent.jetmp3.data.constants.FetchState
 import com.vincent.jetmp3.data.datastore.apiTokenDataStore
+import com.vincent.jetmp3.data.models.SpotifyArtist
 import com.vincent.jetmp3.domain.SpotifyDeveloperService
 import com.vincent.jetmp3.domain.SpotifyDeveloperTokenService
-import com.vincent.jetmp3.domain.models.SpotifyArtist
 import com.vincent.jetmp3.domain.models.SpotifyToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import okio.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,12 +34,8 @@ class SpotifyRepository @Inject constructor(
 	private val _token: MutableStateFlow<SpotifyToken> = MutableStateFlow(SpotifyToken())
 
 	private val _fetchState = MutableStateFlow(FetchState.LOADING)
-	val fetchState: StateFlow<FetchState>
-		get() = _fetchState
 
 	private val _fetchedArtist = MutableStateFlow<SpotifyArtist?>(null)
-	val fetchedArtist: StateFlow<SpotifyArtist?>
-		get() = _fetchedArtist
 
 	private val artistId = "1Xyo4u8uXC1ZmMpatF05PJ"
 
@@ -49,7 +45,7 @@ class SpotifyRepository @Inject constructor(
 		}
 	}
 
-	suspend fun fetchArtistInfo(ids: String = artistId) {
+	suspend fun fetchArtistInfo(ids: String = artistId): SpotifyArtist? {
 		this._fetchState.value = FetchState.LOADING
 
 		while (_token.value.accessToken.isEmpty()) {
@@ -69,15 +65,26 @@ class SpotifyRepository @Inject constructor(
 				}
 				_fetchState.value = FetchState.ERROR
 				Log.e("SpotifyManager", "fetchArtistInfo: ${response.errorBody()?.string()}")
-				return
 			}
 			_fetchedArtist.value = artist
 			Log.d("SpotifyManager", "fetchArtistInfo: ${_fetchedArtist.value}")
 
 			_fetchState.value = FetchState.SUCCESS
+			return artist
 		} catch (e: Exception) {
 			_fetchState.value = FetchState.ERROR
 			Log.e("SpotifyManager", "fetchArtistInfo: ${e.message}")
+			return null
+		} catch (io: IOException) {
+			_fetchState.value = FetchState.ERROR
+			Log.e("SpotifyManager", "fetchArtistInfo: ${io.message}")
+			return null
+		} catch (e: Throwable) {
+			_fetchState.value = FetchState.ERROR
+			Log.e("SpotifyManager", "fetchArtistInfo: ${e.message}")
+			return null
+		} finally {
+			delay(1000)
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -67,6 +68,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import arrow.core.Either
 import coil.compose.AsyncImage
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.theme.DarkSurface
@@ -119,6 +121,8 @@ fun PlayingScreen(
 			)
 		}
 	}
+
+	BackHandler { onTopAppClick() }
 
 	LaunchedEffect(playbackState.currentTrack) {
 		ambientColor = viewModel.getDominantColor()
@@ -233,7 +237,8 @@ fun PlayingScreen(
 							horizontalAlignment = Alignment.CenterHorizontally
 						) {
 							AsyncImage(
-								model = "https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg",
+								model = playbackState.currentTrack?.images?.firstOrNull()
+									?: "https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg",
 								contentDescription = "Image",
 								contentScale = ContentScale.Crop,
 								modifier = Modifier
@@ -287,7 +292,10 @@ fun PlayingScreen(
 									)
 
 									Text(
-										text = playbackState.currentTrack!!.artistType.name,
+										text = when (val artist = playbackState.currentArtist) {
+											is Either.Left -> artist.value?.name ?: "Unknown Nest Artist"
+											is Either.Right -> artist.value?.name ?: "Unknown Spotify Artist"
+										},
 										style = MaterialTheme.typography.labelMedium,
 										color = MaterialTheme.colorScheme.onSurface
 									)
@@ -328,13 +336,6 @@ fun PlayingScreen(
 								Column(
 									horizontalAlignment = Alignment.CenterHorizontally
 								) {
-//							LinearProgressIndicator(
-//								progress = { progressFloat },
-//								color = Color.White,
-//								modifier = Modifier
-//									.fillMaxWidth(0.95f)
-//									.height(4.dp),
-//							)
 
 									Slider(
 										value = if (isUserSeeking) sliderProgress else animProgress.value,
@@ -406,23 +407,21 @@ fun PlayingScreen(
 											modifier = Modifier.size(32.dp),
 										)
 									}
-									Box {
-										IconButton(
-											onClick = { viewModel.playOrPause() },
-											modifier = Modifier
-												.size(80.dp)
-												.background(MaterialTheme.colorScheme.onSurface, CircleShape)
-										) {
-											Icon(
-												painter = painterResource(
-													if (playbackState.isPlaying) R.drawable.solar__pause_bold
-													else R.drawable.solar__play_bold
-												),
-												contentDescription = "play",
-												modifier = Modifier.size(32.dp),
-												tint = MaterialTheme.colorScheme.surface
-											)
-										}
+									IconButton(
+										onClick = { viewModel.playOrPause() },
+										modifier = Modifier
+											.size(80.dp)
+											.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+									) {
+										Icon(
+											painter = painterResource(
+												if (playbackState.isPlaying) R.drawable.solar__pause_bold
+												else R.drawable.solar__play_bold
+											),
+											contentDescription = "play",
+											modifier = Modifier.size(32.dp),
+											tint = MaterialTheme.colorScheme.surface
+										)
 									}
 									IconButton(
 										onClick = { viewModel.seekToNext() }
@@ -445,4 +444,5 @@ fun PlayingScreen(
 			}
 		}
 	)
+
 }

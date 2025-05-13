@@ -1,6 +1,6 @@
 package com.vincent.jetmp3.domain
 
-import com.vincent.jetmp3.domain.models.SpotifyArtist
+import com.vincent.jetmp3.data.models.SpotifyArtist
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header

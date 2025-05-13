@@ -2,42 +2,22 @@ package com.vincent.jetmp3.utils
 
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
-import android.os.Bundle
 import android.util.Base64
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.vincent.jetmp3.data.models.AudioFile
 import com.vincent.jetmp3.domain.models.PaletteColor
 import com.vincent.jetmp3.domain.models.response.TokenResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.util.Date
-
-fun AudioFile.toMediaItem(): MediaItem {
-	return MediaItem.Builder()
-		.setUri(this.uri)
-		.setMediaId(this.id.toString())
-		.setMediaMetadata(
-			MediaMetadata.Builder()
-				.setTitle(this.title)
-				.setArtist(this.artist)
-				.setExtras(Bundle().apply {
-					putString("type", this@toMediaItem.type)
-				})
-				.build()
-		)
-		.build()
-}
 
 fun decodeJwt(token: String): TokenResponse? {
 	return try {
@@ -107,9 +87,9 @@ suspend fun getDominantColorFromUrl(
 
 fun mixColors(colors: Array<Pair<Color, Float>>): Color {
 	if (colors.isEmpty()) return Color.Transparent
-	var r = 0f;
-	var g = 0f;
-	var b = 0f;
+	var r = 0f
+	var g = 0f
+	var b = 0f
 	var a = 0f
 	var totalWeight = 0f
 

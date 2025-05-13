@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -59,12 +60,6 @@ fun MyNavigationBar(
 			title = "Library",
 			icon = R.drawable.solar__library_outline,
 			activeIcon = R.drawable.solar__library_bold
-		),
-		NavigationBarItem(
-			route = "now_playing",
-			title = "Playing",
-			icon = R.drawable.solar__play_outline,
-			activeIcon = R.drawable.solar__play_bold
 		),
 	)
 
@@ -116,6 +111,7 @@ fun NavBarItem(
 		modifier = Modifier
 			.clip(RoundedCornerShape(4.dp))
 			.background(Color.Transparent)
+			.rotate(if (isPressed) 2f else 0f)
 			.scaleOnTap(
 				scale = scale,
 				onPressStart = { isPressed = true },

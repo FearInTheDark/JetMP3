@@ -1,10 +1,16 @@
 package com.vincent.jetmp3.media.service
 
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.vincent.jetmp3.domain.models.Track
+import arrow.core.Either
+import com.vincent.jetmp3.data.constants.ArtistType
+import com.vincent.jetmp3.data.models.NestArtist
+import com.vincent.jetmp3.data.models.SpotifyArtist
+import com.vincent.jetmp3.data.models.Track
 import com.vincent.jetmp3.utils.PlaybackState
+import com.vincent.jetmp3.utils.functions.TrackAdditions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,8 +26,10 @@ import javax.inject.Singleton
 
 @Singleton
 class MediaServiceHandler @Inject constructor(
-	private val exoPlayer: ExoPlayer
+	private val exoPlayer: ExoPlayer,
+	private val trackAdditions: TrackAdditions
 ) : Player.Listener {
+
 	private val _playerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Initial)
 	val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
 
@@ -41,13 +49,15 @@ class MediaServiceHandler @Inject constructor(
 		exoPlayer.play()
 	}
 
-	fun setMediaItemList(tracks: List<Track>) {
+	fun setMediaItemList(tracks: List<Track>, index: Int = 0) {
+//		if (exoPlayer.isPlaying) return
 		val items = tracks.map { it.toMediaItem() }
 		_playbackState.value = _playbackState.value.copy(
 			queue = tracks,
 			trackList = items
 		)
 		exoPlayer.setMediaItems(items)
+		exoPlayer.seekTo(index, 0)
 		exoPlayer.prepare()
 	}
 
@@ -104,6 +114,47 @@ class MediaServiceHandler @Inject constructor(
 			stopProgressUpdate()
 		}
 		updatePlaybackState(isPlaying = isPlaying)
+	}
+
+	override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+		super.onMediaItemTransition(mediaItem, reason)
+
+		_playerState.value = PlayerState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
+		updatePlaybackState()
+		updateCurrentArtist()
+		Log.d("MediaServiceHandler", "CurrentTrack: ${_playbackState.value.currentTrack}")
+	}
+
+	private fun updateCurrentArtist() {
+		val track = _playbackState.value.currentMediaItem ?: return
+		Log.d("MediaServiceHandler", "CurrentTrack: $track")
+		scope.launch {
+			val artist: Either<NestArtist?, SpotifyArtist?> = try {
+				when (track.mediaMetadata.artist) {
+					ArtistType.NestArtist.name -> Either.Left(
+						trackAdditions.getNestArtist(
+							track.mediaMetadata.extras?.getString("artistId").toString()
+						)
+					)
+
+					ArtistType.SpotifyArtist.name -> Either.Right(
+						trackAdditions.getSpotifyArtist(
+							track.mediaMetadata.extras?.getString("artistId").toString()
+						)
+					)
+
+					else -> Either.Left(null)
+				}
+			} catch (e: Exception) {
+				Log.e("MediaServiceHandler", "Error fetching artist: ${e.message} - ${e.cause}")
+				Either.Right(null)
+			}
+
+			Log.d("MediaServiceHandler", "FetchedArtist: $artist")
+			_playbackState.value = _playbackState.value.copy(
+				currentArtist = artist
+			)
+		}
 	}
 
 	private suspend fun playOrPause() {

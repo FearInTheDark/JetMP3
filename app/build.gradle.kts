@@ -130,4 +130,8 @@ dependencies {
 	implementation(libs.converter.moshi)
 	implementation(libs.moshi.kotlin)
 
+	// Arrow KT
+	implementation(libs.arrow.kt.arrow.core)
+	implementation(libs.arrow.fx.coroutines)
+
 }

@@ -1,21 +1,19 @@
 package com.vincent.jetmp3.ui.viewmodels
 
-import android.util.Log
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.util.UnstableApi
 import com.vincent.jetmp3.data.constants.UIEvent
 import com.vincent.jetmp3.data.constants.UIState
-import com.vincent.jetmp3.data.repository.AudioRepository
-import com.vincent.jetmp3.domain.ImagePaletteService
-import com.vincent.jetmp3.domain.models.request.VibrantRequest
+import com.vincent.jetmp3.data.models.Track
+import com.vincent.jetmp3.data.repository.ServiceRepository
+import com.vincent.jetmp3.data.repository.TrackRepository
 import com.vincent.jetmp3.media.service.MediaServiceHandler
 import com.vincent.jetmp3.media.service.PlayerEvent
 import com.vincent.jetmp3.media.service.PlayerState
-import com.vincent.jetmp3.utils.paletteToColor
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,25 +23,20 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AudioViewModel @Inject constructor(
+	private val repository: TrackRepository,
+	private val serviceRepository: ServiceRepository,
 	private val mediaServiceHandler: MediaServiceHandler,
-	private val repository: AudioRepository,
-	private val imagePaletteService: ImagePaletteService,
+	savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-	val playbackState = mediaServiceHandler.playbackState
 
-	init {
-		// Init log
-		Log.d("Initialization", "AudioViewModel initialized")
-	}
-
-	private val _progressString = MutableStateFlow("00:00")
-	val progressString: StateFlow<String> get() = _progressString.asStateFlow()
+	private val playbackState = mediaServiceHandler.playbackState
+	val tracks = mutableStateOf(savedStateHandle["tracks"] ?: emptyList<Track>())
 
 	private val _uiState = MutableStateFlow<UIState>(UIState.Initial)
 	val uiState: StateFlow<UIState> get() = _uiState.asStateFlow()
 
 	init {
-		getAudioData()
+		fetchTracks()
 	}
 
 	init {
@@ -96,38 +89,30 @@ class AudioViewModel @Inject constructor(
 				playbackState.value.progress = uiEvent.progress
 			}
 
-			UIEvent.FetchAudio -> getAudioData()
+			UIEvent.FetchAudio -> fetchTracks()
 		}
 	}
 
-	private fun getAudioData() {
+	private fun fetchTracks() {
 		_uiState.value = UIState.Fetching
 		viewModelScope.launch {
-			mediaServiceHandler.setMediaItemList(repository.getLocalTracks())
+			tracks.value = repository.getNestTracks()?.toList() ?: emptyList()
+			mediaServiceHandler.setMediaItemList(tracks.value)
 			_uiState.value = UIState.Ready
 		}
+	}
+
+	fun setTracks(
+		tracks: List<Track> = this.tracks.value,
+		index: Int = 0
+	) {
+		_uiState.value = UIState.Fetching
+		mediaServiceHandler.setMediaItemList(tracks, index)
 	}
 
 	override fun onCleared() {
 		viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.Stop) }
 		super.onCleared()
-	}
-
-	suspend fun getDominantColor(imageUrl: String? = null): Color {
-		val selectedAudio = playbackState.value.currentTrack ?: return Color.Gray
-
-		try {
-			val rgb = viewModelScope.async {
-				delay(300)
-				imagePaletteService.getPalette(VibrantRequest(imageUrl ?: selectedAudio.images.first()))
-			}.await().muted
-			Log.d("AudioViewModel", "getDominantColor: $rgb")
-			return paletteToColor(rgb)
-		} catch (e: Exception) {
-			Log.e("AudioViewModel", "getDominantColor: ${e.message}")
-			return Color.Gray
-		}
-
 	}
 
 	private fun calculateProgressValue(currentProgress: Long) {
@@ -138,4 +123,10 @@ class AudioViewModel @Inject constructor(
 			)
 		}
 	}
+
+	@UnstableApi
+	fun stopService() = serviceRepository.stopServiceRunning()
+
+	@UnstableApi
+	fun startService() = serviceRepository.startServiceRunning()
 }

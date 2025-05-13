@@ -13,7 +13,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,8 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +59,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import arrow.core.Either
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.vincent.jetmp3.R
 import com.vincent.jetmp3.ui.viewmodels.NowPlayingBarViewModel
 import com.vincent.jetmp3.utils.mixColors
-import kotlin.math.abs
+import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
@@ -70,10 +73,13 @@ fun NowPlayingBar(
 	viewModel: NowPlayingBarViewModel = hiltViewModel(),
 	onClick: () -> Unit
 ) {
+	val scope = rememberCoroutineScope()
+
 	val playbackState by viewModel.playbackState.collectAsState()
 	var dominantColor by remember { mutableStateOf(Color.Gray) }
-	var barVisible by remember(playbackState.isPlaying) {
-		mutableStateOf(playbackState.isPlaying)
+	var offsetY by remember { mutableFloatStateOf(0f) }
+	val barVisible by remember(playbackState.currentTrack) {
+		mutableStateOf(playbackState.currentTrack != null)
 	}
 
 	LaunchedEffect(playbackState.currentTrack) {
@@ -126,23 +132,23 @@ fun NowPlayingBar(
 				)
 				.padding(6.dp)
 				.pointerInput(Unit) {
-					detectDragGestures { _, dragAmount ->
-						val (_, y) = dragAmount
-						if (y > 0) {
-							if (abs(y) > 10.dp.toPx()) {
-								barVisible = false
-								viewModel.pause()
-							}
-						} else if (y < 0) {
-							if (abs(y) > 10.dp.toPx()) {
+					detectVerticalDragGestures(
+						onVerticalDrag = { change, dragAmount ->
+							change.consume()
+							offsetY += dragAmount
+						},
+						onDragEnd = {
+							if (offsetY > 100) {
+								viewModel.playPause()
+							} else if (offsetY < -100) {
 								onClick()
 							}
+							offsetY = 0f
 						}
-					}
+					)
 				},
 			contentAlignment = Alignment.Center
-		)
-		{
+		) {
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically,
@@ -154,7 +160,7 @@ fun NowPlayingBar(
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
 					AsyncImage(
-						model = ImageRequest.Builder(LocalContext.current).data(playbackState.currentTrack?.images?.first()).build(),
+						model = ImageRequest.Builder(LocalContext.current).data(playbackState.currentTrack?.images?.firstOrNull()).build(),
 						fallback = painterResource(R.drawable.material_icon_theme__gemini_ai),
 						contentDescription = "Song Label",
 						contentScale = ContentScale.Crop,
@@ -186,8 +192,10 @@ fun NowPlayingBar(
 						Spacer(Modifier.height(4.dp))
 
 						Text(
-//							text = currentSong?.artist ?: "Taylor Swift",
-							text = playbackState.isPlaying.toString(),
+							text = when (val artist = playbackState.currentArtist) {
+								is Either.Left -> artist.value?.name ?: "Unknown Nest Artist"
+								is Either.Right -> artist.value?.name ?: "Unknown Spotify Artist"
+							},
 							fontFamily = FontFamily(Font(R.font.spotifymixui_regular)),
 							color = Color.White,
 							fontSize = 12.sp,
@@ -195,8 +203,8 @@ fun NowPlayingBar(
 							modifier = Modifier
 						)
 					}
-
 				}
+
 				Row(
 					modifier = Modifier
 						.wrapContentSize(),
@@ -204,14 +212,28 @@ fun NowPlayingBar(
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
 					Icon(
-						painter = painterResource(R.drawable.logos__google_bard_icon),
-						contentDescription = "Spotify",
+						painter = painterResource(if (playbackState.isPlaying) R.drawable.solar__pause_bold else R.drawable.solar__play_bold),
+						contentDescription = "PlayPause",
 						Modifier
-							.width(44.dp)
-							.aspectRatio(1f),
-						tint = Color.Unspecified
+							.width(24.dp)
+							.aspectRatio(1f)
+							.clickable { viewModel.playPause() },
+						tint = MaterialTheme.colorScheme.onSurface.copy(0.8f)
 					)
-
+					Icon(
+						painter = painterResource(if (playbackState.currentTrack!!.isFavorite) R.drawable.iconoir__heart_solid else R.drawable.iconoir__heart),
+						contentDescription = "Favorite",
+						Modifier
+							.width(24.dp)
+							.aspectRatio(1f)
+							.clickable { scope.launch { viewModel.toggleFavorite() } },
+						tint = if (playbackState.currentTrack!!.isFavorite) {
+							Color(0xFFF64A55).copy(0.8f)
+						} else {
+							MaterialTheme.colorScheme.onSurface.copy(0.8f)
+						},
+					)
+					Spacer(Modifier.width(8.dp))
 				}
 			}
 

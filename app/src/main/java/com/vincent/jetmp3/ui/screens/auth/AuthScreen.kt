@@ -130,7 +130,7 @@ fun AuthScreen(
 			OutlinedTextField(
 				value = authViewModel.email.value,
 				onValueChange = { authViewModel.email.value = it },
-				label = { Text("Email") },
+				label = { Text("Email", style = LabelLineMedium) },
 				textStyle = TitleLineBig,
 				modifier = Modifier.fillMaxWidth(),
 				shape = RoundedCornerShape(8.dp),
@@ -151,7 +151,7 @@ fun AuthScreen(
 				OutlinedTextField(
 					value = authViewModel.username.value,
 					onValueChange = { authViewModel.username.value = it },
-					label = { Text("What should we call you?") },
+					label = { Text("What should we call you?", style = LabelLineMedium) },
 					textStyle = TitleLineBig,
 					modifier = Modifier.fillMaxWidth(),
 					shape = RoundedCornerShape(8.dp),
@@ -166,7 +166,7 @@ fun AuthScreen(
 			OutlinedTextField(
 				value = authViewModel.password.value,
 				onValueChange = { authViewModel.password.value = it },
-				label = { Text("Password") },
+				label = { Text("Password", style = LabelLineMedium) },
 				textStyle = TitleLineBig,
 				visualTransformation = PasswordVisualTransformation(),
 				modifier = Modifier.fillMaxWidth(),

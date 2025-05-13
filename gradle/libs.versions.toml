@@ -1,6 +1,7 @@
 [versions]
 accompanistPermissions = "0.30.1"
 agp = "8.7.3"
+arrowCoreVersion = "2.1.0"
 hiltAndroidGradlePlugin = "2.56"
 kotlin = "2.1.20"
 coreKtx = "1.16.0"
@@ -47,6 +48,8 @@ lottieCompose = "6.6.6"
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrowCoreVersion" }
+arrow-kt-arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrowCoreVersion" }
 hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroidGradlePlugin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

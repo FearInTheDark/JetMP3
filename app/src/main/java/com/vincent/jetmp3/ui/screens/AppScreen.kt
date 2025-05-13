@@ -1,17 +1,18 @@
 package com.vincent.jetmp3.ui.screens
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -42,21 +47,24 @@ import com.vincent.jetmp3.ui.components.navigation.MyNavigationBar
 import com.vincent.jetmp3.ui.components.navigation.NowPlayingBar
 import com.vincent.jetmp3.ui.screens.auth.AuthScreen
 import com.vincent.jetmp3.ui.screens.auth.AuthWelcome
+import com.vincent.jetmp3.ui.screens.test.FullScreenSwipeToDismiss
+import com.vincent.jetmp3.ui.state.LocalPlayingShow
+import com.vincent.jetmp3.ui.theme.LabelLineMedium
 import com.vincent.jetmp3.utils.Screen
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
-@SuppressLint("UnrememberedMutableState")
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun AppScreen(
-	onItemClick: () -> Unit
-) {
+fun AppScreen() {
 	val navController = rememberNavController()
 	val navBackStackEntry by navController.currentBackStackEntryAsState()
 	val currentRoute = navBackStackEntry?.destination?.route
 	val permissionState = rememberPermissionState(Manifest.permission.READ_MEDIA_AUDIO)
-	val showNavBar by derivedStateOf {
-		currentRoute !in listOf(Screen.Auth.route, Screen.AuthWelcome.route, Screen.NowPlaying.route)
+	val playingShow = remember { mutableStateOf(false) }
+	val showNavBar by remember(currentRoute) {
+		derivedStateOf {
+			currentRoute !in listOf(Screen.Auth.route, Screen.AuthWelcome.route, Screen.NowPlaying.route)
+		}
 	}
 
 	LaunchedEffect(Unit) {
@@ -71,78 +79,85 @@ fun AppScreen(
 		}
 	}
 
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surface),
-		contentAlignment = Alignment.Center,
+
+	CompositionLocalProvider(
+		LocalTextStyle provides LabelLineMedium,
+		LocalPlayingShow provides playingShow,
 	) {
-		AppNavHost(navController) {
-			onItemClick()
-		}
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.background(MaterialTheme.colorScheme.surface),
+			contentAlignment = Alignment.Center,
+		) {
+			AppNavHost(navController)
 
-		if (showNavBar) {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(80.dp)
-					.align(Alignment.BottomCenter)
-					.background(
-						Brush.verticalGradient(
-							colors = if (isSystemInDarkTheme()) listOf(
-								Color.Black.copy(0.1f),
-								Color.Black.copy(0.3f),
-								Color.Black.copy(0.4f),
-								Color.Black.copy(0.7f),
-								Color.Black.copy(0.85f),
-								Color.Black.copy(0.9f),
-								Color.Black,
-							) else listOf(
-								Color.White.copy(0.1f),
-								Color.White.copy(0.3f),
-								Color.White.copy(0.8f),
-								Color.White.copy(0.8f),
-								Color.White.copy(0.85f),
-								Color.White.copy(0.9f),
-								Color.White,
-							)
-						)
-					)
-			)
-
-			Column(
-				modifier = Modifier
-					.fillMaxSize(),
-				horizontalAlignment = Alignment.CenterHorizontally,
-				verticalArrangement = Arrangement.Bottom
-			) {
-				NowPlayingBar { navController.navigate(Screen.NowPlaying.route) }
-				MyNavigationBar(
+			if (showNavBar) {
+				Box(
 					modifier = Modifier
 						.fillMaxWidth()
+						.height(100.dp)
+						.align(Alignment.BottomCenter)
 						.background(
 							Brush.verticalGradient(
-								colors = if (isSystemInDarkTheme()) listOf(
-									Color.Transparent,
-									Color.Black.copy(0.7f),
-								) else listOf(
-									Color.Transparent,
-									Color.Gray.copy(0.8f),
+								colorStops = arrayOf(
+									0f to Color.Transparent,
+									1f to Color.Black.copy(0.9f),
 								),
-								startY = 0f,
-								endY = Float.POSITIVE_INFINITY,
 							)
 						)
-						.padding(horizontal = 8.dp),
-					navController = navController
 				)
+
+				Column(
+					modifier = Modifier
+						.fillMaxSize(),
+					horizontalAlignment = Alignment.CenterHorizontally,
+					verticalArrangement = Arrangement.Bottom
+				) {
+					NowPlayingBar { playingShow.value = !playingShow.value }
+					MyNavigationBar(
+						modifier = Modifier
+							.fillMaxWidth()
+							.background(
+								Brush.verticalGradient(
+									listOf(
+										Color.Transparent,
+										Color.Black.copy(0.7f),
+									),
+									startY = 0f,
+									endY = Float.POSITIVE_INFINITY,
+								)
+							)
+							.padding(horizontal = 8.dp),
+						navController = navController
+					)
+				}
+			}
+		}
+		AnimatedVisibility(
+			visible = playingShow.value,
+			enter = slideInVertically(
+				initialOffsetY = { it }, // From bottom to top
+				animationSpec = tween(durationMillis = 1000, delayMillis = 10)
+			),
+			exit = slideOutVertically(
+				targetOffsetY = { it }, // To bottom
+				animationSpec = tween(durationMillis = 1000, delayMillis = 10)
+			)
+		) {
+			FullScreenSwipeToDismiss(
+				onDismissed = { playingShow.value = !playingShow.value }
+			) {
+				PlayingScreen {
+					playingShow.value = !playingShow.value
+				}
 			}
 		}
 	}
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
+fun AppNavHost(navController: NavHostController) {
 	NavHost(
 		navController = navController,
 		startDestination = Screen.AuthWelcome.route,
@@ -247,14 +262,12 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 				)
 			}
 		) {
-			SongListScreen(
-				onItemClick = onItemClick,
-				action = {
-					navController.navigate(Screen.AuthWelcome.route) {
-						popUpTo(Screen.Home.route) { inclusive = true }
-						launchSingleTop = true
-					}
-				})
+			SongListScreen {
+				navController.navigate(Screen.AuthWelcome.route) {
+					popUpTo(Screen.Home.route) { inclusive = true }
+					launchSingleTop = true
+				}
+			}
 		}
 
 		composable(route = Screen.Search.route) {
@@ -265,32 +278,5 @@ fun AppNavHost(navController: NavHostController, onItemClick: () -> Unit) {
 			LibraryScreen()
 		}
 
-		composable(
-			route = Screen.NowPlaying.route,
-			enterTransition = {
-				slideIntoContainer(
-					towards = AnimatedContentTransitionScope.SlideDirection.Up,
-					animationSpec = tween(
-						durationMillis = 1000,
-						delayMillis = 10
-					)
-				)
-			},
-			exitTransition = {
-				slideOutOfContainer(
-					towards = AnimatedContentTransitionScope.SlideDirection.Down,
-					animationSpec = tween(
-						durationMillis = 1000,
-						delayMillis = 10
-					)
-				)
-			}
-		) {
-			PlayingScreen {
-				navController.navigateUp()
-			}
-		}
-
 	}
-
 }
