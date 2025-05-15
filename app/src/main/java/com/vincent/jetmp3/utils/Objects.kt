@@ -38,9 +38,3 @@ data class PlaybackState(
 	val isBuffering: Boolean = false,
 	val hasEnded: Boolean = false
 )
-
-data class RecentCategoryItem(
-	val imageUrl: String = "",
-	val title: String = ""
-)
-

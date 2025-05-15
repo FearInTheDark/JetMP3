@@ -278,5 +278,11 @@ fun AppNavHost(navController: NavHostController) {
 			LibraryScreen()
 		}
 
+
+		composable(route = Screen.Settings.route) {
+			CategoryScreen(
+				show  = true
+			)
+		}
 	}
 }

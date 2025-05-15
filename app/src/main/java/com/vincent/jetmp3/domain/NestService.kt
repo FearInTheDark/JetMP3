@@ -3,7 +3,9 @@ package com.vincent.jetmp3.domain
 import com.vincent.jetmp3.data.constants.SearchType
 import com.vincent.jetmp3.data.models.NestArtist
 import com.vincent.jetmp3.data.models.Track
-import com.vincent.jetmp3.domain.models.response.FavoriteResponse
+import com.vincent.jetmp3.domain.models.RecentCategoryItem
+import com.vincent.jetmp3.domain.models.response.NestResponse
+import com.vincent.jetmp3.domain.models.response.PageResponse
 import com.vincent.jetmp3.domain.models.response.SearchResult
 import retrofit2.Response
 import retrofit2.http.GET
@@ -38,5 +40,15 @@ interface NestService {
 	suspend fun toggleFavorite(
 		@Header("Authorization") auth: String,
 		@Query("trackId") trackId: Long,
-	): FavoriteResponse
+	): NestResponse
+
+	@GET("favorites")
+	suspend fun getUserFavoriteTracks(
+		@Header("Authorization") auth: String,
+	): Response<PageResponse>
+
+	@GET("tracks/categories")
+	suspend fun getCategories(
+		@Header("Authorization") auth: String,
+	): Response<RecentCategoryItem>
 }

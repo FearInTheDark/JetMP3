@@ -61,6 +61,12 @@ fun MyNavigationBar(
 			icon = R.drawable.solar__library_outline,
 			activeIcon = R.drawable.solar__library_bold
 		),
+		NavigationBarItem(
+			route = "settings",
+			title = "Setting",
+			icon = R.drawable.tabler__category,
+			activeIcon = R.drawable.tabler__category_filled
+		),
 	)
 
 	NavigationBar(

@@ -57,7 +57,6 @@ import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AudioViewModel
 import com.vincent.jetmp3.ui.viewmodels.HomeViewModel
-import com.vincent.jetmp3.utils.RecentCategoryItem
 import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -72,12 +71,12 @@ fun SongListScreen(
 	val coroutineScope = rememberCoroutineScope()
 	val tracks by viewModel.tracks
 
+	var dropdownShow by remember { mutableStateOf(false) }
 	val refreshing by remember(viewModel.uiState) {
 		derivedStateOf {
 			viewModel.uiState.value == UIState.Fetching
 		}
 	}
-	var dropdownShow by remember { mutableStateOf(false) }
 
 	PullToRefreshBox(
 		isRefreshing = refreshing,
@@ -181,36 +180,12 @@ fun SongListScreen(
 			) {
 
 				item {
-					RecentCategory(
-						categories = listOf(
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-							RecentCategoryItem(),
-						)
-					)
-				}
-
-				item {
+					RecentCategory()
 					Spacer(Modifier.height(8.dp))
 				}
 
 				item {
 					RecentScroll()
-				}
-
-				item {
-					Spacer(Modifier.height(8.dp))
-				}
-
-				item {
-					RecentScroll()
-				}
-
-				item {
 					Spacer(Modifier.height(8.dp))
 				}
 

@@ -23,12 +23,16 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.vincent.jetmp3.R
+import com.vincent.jetmp3.data.constants.UIState
+import com.vincent.jetmp3.data.models.Track
 import com.vincent.jetmp3.ui.theme.LabelLineBold
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 
 @Composable
-fun RecentlyPlayedItem(
-	playlist: PlaylistItem, onClick: () -> Unit = {}
+fun RecentItem(
+	track: Track,
+	state: UIState,
+	onClick: () -> Unit = {}
 ) {
 	Column(
 		modifier = Modifier
@@ -46,7 +50,7 @@ fun RecentlyPlayedItem(
 		) {
 			AsyncImage(
 				model = ImageRequest.Builder(LocalContext.current)
-					.data("https://res.cloudinary.com/dsy29z79v/image/upload/v1746724872/music_ztrfid.jpg")
+					.data(track.images.first())
 					.crossfade(true).build(),
 				fallback = painterResource(R.drawable.logos__google_bard_icon),
 				contentDescription = "Image",
@@ -55,12 +59,11 @@ fun RecentlyPlayedItem(
 					.clip(RoundedCornerShape(4.dp))
 					.aspectRatio(1f)
 			)
-
 		}
 
 		// Artist name
 		Text(
-			text = playlist.name,
+			text = track.name,
 			style = LabelLineBold,
 			color = MaterialTheme.colorScheme.onSurface,
 			maxLines = 1,
@@ -68,26 +71,13 @@ fun RecentlyPlayedItem(
 			modifier = Modifier.padding(top = 8.dp)
 		)
 
-		// Description
-		if (playlist.artist != null) {
-			Text(
-				text = playlist.artist,
-				style = LabelLineSmall,
-				color = Color.Gray,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-				modifier = Modifier.padding(top = 4.dp)
-			)
-		}
+		Text(
+			text = track.artistType.name,
+			style = LabelLineSmall,
+			color = Color.Gray,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis,
+			modifier = Modifier.padding(top = 4.dp)
+		)
 	}
 }
-
-// Data classes and enums
-enum class PlaylistType {
-	PLAYLIST, ALBUM, ARTIST, SONG, LIKED, RADIO
-}
-
-data class PlaylistItem(
-	val name: String, val id: String, val type: PlaylistType, val artist: String? = null
-)
-

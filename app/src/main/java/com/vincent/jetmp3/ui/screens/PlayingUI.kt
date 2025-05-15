@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -11,6 +12,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -24,8 +26,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 //noinspection UsingMaterialAndMaterial3Libraries
@@ -64,8 +66,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import arrow.core.Either
@@ -76,6 +78,7 @@ import com.vincent.jetmp3.ui.theme.HeadLineMedium
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineSmall
 import com.vincent.jetmp3.ui.viewmodels.PlayingViewModel
+import com.vincent.jetmp3.utils.functions.durationToString
 import com.vincent.jetmp3.utils.mixColors
 import kotlinx.coroutines.launch
 
@@ -86,9 +89,14 @@ fun PlayingScreen(
 	onTopAppClick: () -> Unit = {}
 ) {
 	val isSystemInDarkTheme = isSystemInDarkTheme()
+	val context = LocalContext.current
 
 	val playbackState by viewModel.playbackState.collectAsState()
-	val progressString by remember { mutableStateOf("00:00") }
+	val progressString by remember(playbackState.currentPosition) {
+		derivedStateOf {
+			durationToString(playbackState.currentPosition)
+		}
+	}
 
 	var sliderProgress by remember { mutableFloatStateOf(0f) }
 	var isUserSeeking by remember { mutableStateOf(false) }
@@ -287,6 +295,7 @@ fun PlayingScreen(
 									Text(
 										text = playbackState.currentTrack!!.name,
 										style = HeadLineMedium,
+										maxLines = 1,
 										color = MaterialTheme.colorScheme.onSurface,
 										modifier = Modifier.basicMarquee()
 									)
@@ -308,19 +317,27 @@ fun PlayingScreen(
 									verticalArrangement = Arrangement.Center,
 									horizontalAlignment = Alignment.End
 								) {
-									Text(
-										text = playbackState.progress.toString(),
-										style = MaterialTheme.typography.labelMedium,
-										color = MaterialTheme.colorScheme.onSurface,
-										softWrap = false
-									)
-									Text(
-										text = bottomSheetScaffoldState.bottomSheetState.currentValue.toString(),
-										style = MaterialTheme.typography.labelMedium,
-										color = MaterialTheme.colorScheme.onSurface,
-										overflow = TextOverflow.Ellipsis,
-										maxLines = 1,
-										softWrap = false,
+									Icon(
+										painter = painterResource(if (playbackState.currentTrack!!.isFavorite) R.drawable.iconoir__heart_solid else R.drawable.iconoir__heart),
+										contentDescription = "Favorite",
+										Modifier
+											.width(24.dp)
+											.aspectRatio(1f)
+											.clickable {
+												scope.launch { viewModel.toggleFavorite() }
+												Toast
+													.makeText(
+														context,
+														if (playbackState.currentTrack!!.isFavorite) "Removed from favorites" else "Added to favorites",
+														Toast.LENGTH_SHORT
+													)
+													.show()
+											},
+										tint = if (playbackState.currentTrack!!.isFavorite) {
+											Color(0xFFF64A55).copy(0.8f)
+										} else {
+											MaterialTheme.colorScheme.onSurface.copy(0.8f)
+										},
 									)
 								}
 							}
@@ -375,14 +392,12 @@ fun PlayingScreen(
 										horizontalArrangement = Arrangement.SpaceBetween,
 									) {
 										Text(
-//									text = durationToString(progress),
-											text = "1:00",
+											text = progressString,
 											color = MaterialTheme.colorScheme.onSurface,
 											style = LabelLineSmall
 										)
 										Text(
-//									text = durationToString(currentSong?.duration),
-											text = progressString,
+											text = durationToString(playbackState.duration),
 											color = MaterialTheme.colorScheme.onSurface,
 											style = LabelLineSmall
 										)
@@ -395,7 +410,7 @@ fun PlayingScreen(
 								contentAlignment = Alignment.Center
 							) {
 								Row(
-									horizontalArrangement = Arrangement.spacedBy(28.dp),
+									horizontalArrangement = Arrangement.spacedBy(16.dp),
 									verticalAlignment = Alignment.CenterVertically,
 								) {
 									IconButton(
@@ -403,6 +418,15 @@ fun PlayingScreen(
 									) {
 										Icon(
 											painter = painterResource(R.drawable.mage__previous_fill),
+											contentDescription = "previous",
+											modifier = Modifier.size(32.dp),
+										)
+									}
+									IconButton(
+										onClick = { viewModel.backward() }
+									) {
+										Icon(
+											painter = painterResource(R.drawable.iconoir__rewind_solid),
 											contentDescription = "previous",
 											modifier = Modifier.size(32.dp),
 										)
@@ -424,6 +448,15 @@ fun PlayingScreen(
 										)
 									}
 									IconButton(
+										onClick = { viewModel.forward() }
+									) {
+										Icon(
+											painter = painterResource(R.drawable.iconoir__forward_solid),
+											contentDescription = "next",
+											modifier = Modifier.size(32.dp),
+										)
+									}
+									IconButton(
 										onClick = { viewModel.seekToNext() }
 									) {
 										Icon(
@@ -438,11 +471,6 @@ fun PlayingScreen(
 					}
 				}
 			}
-			LazyColumn {
-				item {
-				}
-			}
 		}
 	)
-
 }

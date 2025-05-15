@@ -69,6 +69,7 @@ import com.vincent.jetmp3.data.constants.UIState
 import com.vincent.jetmp3.ui.components.home.ArtistSearchSelect
 import com.vincent.jetmp3.ui.components.home.TrackSelect
 import com.vincent.jetmp3.ui.layout.LoadingOverlay
+import com.vincent.jetmp3.ui.theme.HeadLineMedium
 import com.vincent.jetmp3.ui.theme.HeadStyleLarge
 import com.vincent.jetmp3.ui.theme.LabelLineMedium
 import com.vincent.jetmp3.ui.theme.TitleLineBig
@@ -247,6 +248,11 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 							icon = "empty.lottie",
 							iconModifier = Modifier
 								.size(400.dp)
+						)
+						Text(
+							text = "No Results Found!",
+							style = HeadLineMedium,
+							color = MaterialTheme.colorScheme.onSurface
 						)
 					} else {
 						FlowRow(

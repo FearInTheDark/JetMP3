@@ -1,6 +1,7 @@
 package com.vincent.jetmp3.ui.components.navigation
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -74,6 +75,7 @@ fun NowPlayingBar(
 	onClick: () -> Unit
 ) {
 	val scope = rememberCoroutineScope()
+	val context = LocalContext.current
 
 	val playbackState by viewModel.playbackState.collectAsState()
 	var dominantColor by remember { mutableStateOf(Color.Gray) }
@@ -180,11 +182,12 @@ fun NowPlayingBar(
 						Text(
 							text = playbackState.currentTrack?.name ?: "Unknown",
 							fontFamily = FontFamily(Font(R.font.spotifymixui_bold)),
-							color = Color.White,
+							color = Color.White.copy(0.9f),
 							fontWeight = FontWeight.Bold,
 							fontSize = 14.sp,
 							letterSpacing = (-0.5).sp,
-							lineHeight = 12.sp,
+//							lineHeight = 12.sp,
+							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							modifier = Modifier.basicMarquee()
 						)
@@ -226,7 +229,16 @@ fun NowPlayingBar(
 						Modifier
 							.width(24.dp)
 							.aspectRatio(1f)
-							.clickable { scope.launch { viewModel.toggleFavorite() } },
+							.clickable {
+								scope.launch { viewModel.toggleFavorite() }
+								Toast
+									.makeText(
+										context,
+										if (playbackState.currentTrack!!.isFavorite) "Removed from favorites" else "Added to favorites",
+										Toast.LENGTH_SHORT
+									)
+									.show()
+							},
 						tint = if (playbackState.currentTrack!!.isFavorite) {
 							Color(0xFFF64A55).copy(0.8f)
 						} else {

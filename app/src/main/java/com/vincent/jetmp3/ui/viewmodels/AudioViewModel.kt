@@ -49,7 +49,13 @@ class AudioViewModel @Inject constructor(
 						mediaServiceHandler.updatePlaybackState { copy(isPlaying = mediaState.isPlaying) }
 					}
 
-					is PlayerState.Progress -> calculateProgressValue(mediaState.progress)
+					is PlayerState.Progress -> {
+						calculateProgressValue(mediaState.progress)
+						mediaServiceHandler.updatePlaybackState {
+							copy(currentPosition = mediaState.progress)
+						}
+					}
+
 					is PlayerState.CurrentPlaying -> {
 						mediaServiceHandler.updatePlaybackState {
 							copy(currentTrack = playbackState.value.queue[mediaState.mediaItemIndex])
@@ -96,7 +102,7 @@ class AudioViewModel @Inject constructor(
 	private fun fetchTracks() {
 		_uiState.value = UIState.Fetching
 		viewModelScope.launch {
-			tracks.value = repository.getNestTracks()?.toList() ?: emptyList()
+			tracks.value = repository.getNestTracks() ?: emptyList()
 			mediaServiceHandler.setMediaItemList(tracks.value)
 			_uiState.value = UIState.Ready
 		}

@@ -13,8 +13,8 @@ plugins {
 val localProperties = Properties().apply {
 	load(rootProject.file("local.properties").inputStream())
 }
-val spotifyClientId = localProperties["SPOTIFY_CLIENT_ID"] as String
-val spotifyClientSecret = localProperties["SPOTIFY_CLIENT_SECRET"] as String
+val spotifyClientId = localProperties["SPOTIFY_CLIENT_ID"] as String?
+val spotifyClientSecret = localProperties["SPOTIFY_CLIENT_SECRET"] as String?
 
 android {
 	namespace = "com.vincent.jetmp3"

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +60,13 @@ import com.vincent.jetmp3.ui.theme.TitleLineBig
 import com.vincent.jetmp3.ui.theme.TitleLineLarge
 import com.vincent.jetmp3.ui.viewmodels.AuthViewModel
 
+/**
+ * AuthScreen is a composable function that displays the authentication screen for the app.
+ * It allows users to log in or sign up using their email and password.
+ * @param authViewModel The ViewModel that handles authentication logic.
+ * @param onValidated A callback function that is called when the authentication is successful.
+ *
+ */
 @Composable
 fun AuthScreen(
 	authViewModel: AuthViewModel = hiltViewModel(),
@@ -173,6 +181,9 @@ fun AuthScreen(
 				shape = RoundedCornerShape(8.dp),
 				keyboardOptions = KeyboardOptions(
 					keyboardType = KeyboardType.Password
+				),
+				keyboardActions = KeyboardActions(
+					onDone = { authViewModel.handle() },
 				),
 				singleLine = true
 			)

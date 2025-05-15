@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
 import arrow.core.Either
 import com.vincent.jetmp3.data.constants.ArtistType
 import com.vincent.jetmp3.data.models.NestArtist
@@ -41,12 +42,6 @@ class MediaServiceHandler @Inject constructor(
 
 	init {
 		exoPlayer.addListener(this)
-	}
-
-	fun setMediaItem(mediaItem: MediaItem) {
-		exoPlayer.setMediaItem(mediaItem)
-		exoPlayer.prepare()
-		exoPlayer.play()
 	}
 
 	fun setMediaItemList(tracks: List<Track>, index: Int = 0) {
