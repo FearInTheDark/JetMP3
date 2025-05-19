@@ -1,6 +1,7 @@
 package com.vincent.jetmp3.ui.components.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -13,12 +14,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,12 +31,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImage
+import com.vincent.jetmp3.R
 import com.vincent.jetmp3.data.constants.UIState
 import com.vincent.jetmp3.data.repository.NestRepository
 import com.vincent.jetmp3.domain.models.RecentCategoryItem
-import com.vincent.jetmp3.media.service.MediaServiceHandler
+import com.vincent.jetmp3.ui.components.image.PlaceholderIcon
+import com.vincent.jetmp3.ui.state.LocalSelectedCategory
 import com.vincent.jetmp3.ui.theme.LabelLineBold
-import com.vincent.jetmp3.ui.theme.TitleLineBig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,11 +46,16 @@ import javax.inject.Inject
 
 @Composable
 fun RecentCategory(
-	viewModel: RecentCategoryViewModel = hiltViewModel()
+	viewModel: RecentCategoryViewModel = hiltViewModel(),
+	action: () -> Unit = {}
 ) {
 	val columns = 2
+	val selectedCategory = LocalSelectedCategory.current
 	val categories by viewModel.categories.collectAsState()
-	val uiState by viewModel.uiState.collectAsState()
+
+	LaunchedEffect(Unit) {
+		viewModel.fetch()
+	}
 
 	Column(
 		modifier = Modifier
@@ -56,15 +67,6 @@ fun RecentCategory(
 		horizontalAlignment = Alignment.Start,
 		verticalArrangement = Arrangement.spacedBy(4.dp)
 	) {
-		Text(
-			text = "Categories",
-			style = TitleLineBig,
-			fontSize = 24.sp,
-			color = MaterialTheme.colorScheme.onSurface,
-			modifier = Modifier.padding(horizontal = 4.dp),
-			letterSpacing = -(0.5).sp
-		)
-
 		categories?.let {
 			FlowRow(
 				horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -84,7 +86,7 @@ fun RecentCategory(
 
 				categories?.favorite?.let {
 					Row(
-						modifier = itemModifier,
+						modifier = itemModifier.clickable { selectedCategory.value = it.url; action() },
 						horizontalArrangement = Arrangement.spacedBy(8.dp),
 						verticalAlignment = Alignment.CenterVertically,
 					) {
@@ -108,18 +110,22 @@ fun RecentCategory(
 
 				categories?.history?.let {
 					Row(
-						modifier = itemModifier,
+						modifier = itemModifier.clickable { selectedCategory.value = it.url; action() },
 						horizontalArrangement = Arrangement.spacedBy(8.dp),
 						verticalAlignment = Alignment.CenterVertically,
 					) {
-						AsyncImage(
-							model = categories?.history?.iconUri,
-							contentDescription = "Favorite",
-							contentScale = ContentScale.Crop,
-							modifier = Modifier
-								.clip(RoundedCornerShape(4.dp))
-								.aspectRatio(1f)
-						)
+						if (it.iconUri == null) {
+							PlaceholderIcon()
+						} else {
+							AsyncImage(
+								model = it.iconUri,
+								contentDescription = "Favorite",
+								contentScale = ContentScale.Crop,
+								modifier = Modifier
+									.clip(RoundedCornerShape(4.dp))
+									.aspectRatio(1f)
+							)
+						}
 
 						Text(
 							text = categories?.history?.title ?: "",
@@ -133,18 +139,32 @@ fun RecentCategory(
 				if (categories!!.playlists.isNotEmpty()) {
 					categories!!.playlists.forEach {
 						Row(
-							modifier = itemModifier,
+							modifier = itemModifier.clickable { selectedCategory.value = it.url; action() },
 							horizontalArrangement = Arrangement.spacedBy(8.dp),
 							verticalAlignment = Alignment.CenterVertically,
 						) {
-							AsyncImage(
-								model = it.iconUri,
-								contentDescription = "Favorite",
-								contentScale = ContentScale.Crop,
-								modifier = Modifier
-									.clip(RoundedCornerShape(4.dp))
-									.aspectRatio(1f)
-							)
+							if (it.iconUri == null) {
+								PlaceholderIcon(
+									icon = R.drawable.hugeicons__playlist_01,
+									backgroundColor = Brush.linearGradient(
+										colors = listOf(
+											Color.Blue,
+											Color.Yellow
+										),
+										start = Offset(0f, 0f),
+										end = Offset.Infinite
+									)
+								)
+							} else {
+								AsyncImage(
+									model = it.iconUri,
+									contentDescription = "Favorite",
+									contentScale = ContentScale.Crop,
+									modifier = Modifier
+										.clip(RoundedCornerShape(4.dp))
+										.aspectRatio(1f)
+								)
+							}
 
 							Text(
 								text = it.title,
@@ -163,17 +183,15 @@ fun RecentCategory(
 
 @HiltViewModel
 class RecentCategoryViewModel @Inject constructor(
-	private val mediaServiceHandler: MediaServiceHandler,
 	private val nestRepository: NestRepository
 ) : ViewModel() {
 
 	private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Fetching)
-	val uiState = _uiState.asStateFlow()
 
 	private val _categories: MutableStateFlow<RecentCategoryItem?> = MutableStateFlow(null)
 	val categories = _categories.asStateFlow()
 
-	init {
+	fun fetch() {
 		viewModelScope.launch {
 			_uiState.value = UIState.Fetching
 			_categories.value = nestRepository.getRecentCategories()

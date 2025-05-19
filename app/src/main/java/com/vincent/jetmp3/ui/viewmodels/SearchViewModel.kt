@@ -7,7 +7,6 @@ import androidx.media3.common.util.UnstableApi
 import com.vincent.jetmp3.data.constants.UIState
 import com.vincent.jetmp3.data.models.Track
 import com.vincent.jetmp3.data.repository.NestRepository
-import com.vincent.jetmp3.data.repository.ServiceRepository
 import com.vincent.jetmp3.domain.models.response.SearchResult
 import com.vincent.jetmp3.media.service.MediaServiceHandler
 import com.vincent.jetmp3.media.service.PlayerEvent
@@ -28,7 +27,6 @@ import kotlin.coroutines.cancellation.CancellationException
 class SearchViewModel @Inject constructor(
 	private val nestRepository: NestRepository,
 	private val mediaServiceHandler: MediaServiceHandler,
-	private val serviceRepository: ServiceRepository,
 ) : ViewModel() {
 
 	private val _searchQuery: MutableStateFlow<String> = MutableStateFlow("")
@@ -75,7 +73,6 @@ class SearchViewModel @Inject constructor(
 	) {
 		mediaServiceHandler.setMediaItemList(tracks, index)
 		mediaServiceHandler.onPlayerEvents(PlayerEvent.PlayPause)
-		serviceRepository.startServiceRunning()
 	}
 
 	fun setSearchQuery(query: String) {

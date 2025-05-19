@@ -5,6 +5,7 @@ import com.vincent.jetmp3.data.models.SpotifyArtist
 import com.vincent.jetmp3.data.repository.AuthRepository
 import com.vincent.jetmp3.data.repository.SpotifyRepository
 import com.vincent.jetmp3.domain.NestService
+import com.vincent.jetmp3.domain.models.response.NestResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -15,19 +16,21 @@ class TrackAdditions @Inject constructor(
 	private val spotifyRepository: SpotifyRepository
 ) {
 
-	suspend fun getNestArtist(id: String): NestArtist? = withContext(Dispatchers.IO) {
-		val response = nestService.getArtist(
+	suspend fun getNestArtist(id: String): NestArtist? = safeApiCall {
+		nestService.getArtist(
 			auth = "Bearer ${authRepository.accessToken.value}",
 			artistId = id
 		)
-		if (response.isSuccessful) {
-			response.body()
-		} else {
-			throw Exception("Failed to fetch artist data")
-		}
 	}
 
 	suspend fun getSpotifyArtist(id: String): SpotifyArtist? = withContext(Dispatchers.IO) {
 		spotifyRepository.fetchArtistInfo(id)
+	}
+
+	suspend fun addListenHistory(id: String): NestResponse? = safeApiCall {
+		nestService.addToHistory(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			trackId = id.toLong()
+		)
 	}
 }

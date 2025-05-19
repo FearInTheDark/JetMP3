@@ -1,21 +1,9 @@
 package com.vincent.jetmp3.utils
 
-import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.util.Base64
-import android.util.Log
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
-import androidx.palette.graphics.Palette
-import coil.ImageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
 import com.vincent.jetmp3.domain.models.PaletteColor
 import com.vincent.jetmp3.domain.models.response.TokenResponse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.util.Date
 
@@ -39,52 +27,6 @@ fun decodeJwt(token: String): TokenResponse? {
 	}
 }
 
-suspend fun getDominantColorFromResource(
-	context: Context,
-	resourceId: Int,
-	defaultColor: Color = Color.Gray
-): Color {
-	return withContext(Dispatchers.Default) {
-		val resource = ContextCompat.getDrawable(context, resourceId)
-		val bitmap = resource?.toBitmap() ?: return@withContext defaultColor
-		val palette = Palette.from(bitmap).generate()
-		val dominant = palette.getDominantColor(defaultColor.toArgb())
-		Color(dominant)
-	}
-}
-
-suspend fun getDominantColorFromUrl(
-	context: Context,
-	imageUrl: String,
-	defaultColor: Color = Color.Gray
-): Color {
-	return withContext(Dispatchers.IO) {
-		try {
-			val imageLoader = ImageLoader(context)
-			val request = ImageRequest.Builder(context)
-				.data(imageUrl)
-				.allowHardware(false) // Important for Palette to work correctly
-				.build()
-
-			val result = imageLoader.execute(request)
-			val drawable = (result as? SuccessResult)?.drawable
-			val bitmap = (drawable as? BitmapDrawable)?.bitmap
-
-			if (bitmap != null) {
-				val palette = Palette.from(bitmap).generate()
-				val dominant = palette.getDominantColor(defaultColor.toArgb())
-				Log.d("TAG", "Dominant color: ${Color(dominant)}")
-				Color(dominant)
-			} else {
-				defaultColor
-			}
-		} catch (e: Exception) {
-			Log.e("TAG", "Error getting dominant color", e)
-			defaultColor
-		}
-	}
-}
-
 fun mixColors(colors: Array<Pair<Color, Float>>): Color {
 	if (colors.isEmpty()) return Color.Transparent
 	var r = 0f
@@ -103,6 +45,15 @@ fun mixColors(colors: Array<Pair<Color, Float>>): Color {
 
 	if (totalWeight <= 0f) return Color.Transparent
 	return Color(r / totalWeight, g / totalWeight, b / totalWeight, a / totalWeight)
+}
+
+fun getOppositeColor(color: Color): Color {
+	return Color(
+		red = 1f - color.red,
+		green = 1f - color.green,
+		blue = 1f - color.blue,
+		alpha = color.alpha
+	)
 }
 
 fun paletteToColor(paletteColor: PaletteColor): Color {

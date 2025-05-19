@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -60,12 +58,6 @@ fun MyNavigationBar(
 			title = "Library",
 			icon = R.drawable.solar__library_outline,
 			activeIcon = R.drawable.solar__library_bold
-		),
-		NavigationBarItem(
-			route = "settings",
-			title = "Setting",
-			icon = R.drawable.tabler__category,
-			activeIcon = R.drawable.tabler__category_filled
 		),
 	)
 
@@ -115,7 +107,6 @@ fun NavBarItem(
 
 	Box(
 		modifier = Modifier
-			.clip(RoundedCornerShape(4.dp))
 			.background(Color.Transparent)
 			.rotate(if (isPressed) 2f else 0f)
 			.scaleOnTap(

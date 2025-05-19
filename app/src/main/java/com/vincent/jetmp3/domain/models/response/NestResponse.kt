@@ -1,8 +1,8 @@
 package com.vincent.jetmp3.domain.models.response
 
-import com.vincent.jetmp3.data.constants.FavoriteType
+import com.vincent.jetmp3.data.constants.ResponseAction
 
 data class NestResponse(
 	val message: String,
-	val action: FavoriteType
+	val action: ResponseAction
 )

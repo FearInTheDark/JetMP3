@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vincent.jetmp3.data.constants.FavoriteType
+import com.vincent.jetmp3.data.constants.ResponseAction
 import com.vincent.jetmp3.data.repository.NestRepository
 import com.vincent.jetmp3.media.service.MediaServiceHandler
 import com.vincent.jetmp3.media.service.PlayerEvent
@@ -37,7 +37,7 @@ class PlayingViewModel @Inject constructor(
 
 	fun updateProgress(newProgress: Float) = viewModelScope.launch { mediaServiceHandler.onPlayerEvents(PlayerEvent.UpdateProgress(newProgress)) }
 
-	suspend fun toggleFavorite(trackId: Long = playbackState.value.currentTrack?.id ?: 0L): FavoriteType {
+	suspend fun toggleFavorite(trackId: Long = playbackState.value.currentTrack?.id ?: 0L): ResponseAction {
 		val res = viewModelScope.async {
 			nestRepository.toggleFavorite(trackId)
 		}.await()
@@ -45,15 +45,15 @@ class PlayingViewModel @Inject constructor(
 			copy(
 				queue = queue.map {
 					if (it.id == trackId) {
-						it.copy(isFavorite = res.action == FavoriteType.ADDED)
+						it.copy(isFavorite = res!!.action == ResponseAction.ADDED)
 					} else it
 				},
 				currentTrack = currentTrack?.copy(
-					isFavorite = res.action == FavoriteType.ADDED
+					isFavorite = res!!.action == ResponseAction.ADDED
 				)
 			)
 		}
-		return res.action
+		return res!!.action
 	}
 
 	suspend fun getDominantColor(imageUrl: String = playbackState.value.currentTrack?.images?.firstOrNull() ?: ""): Color =

@@ -36,7 +36,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -74,6 +76,7 @@ fun AuthScreen(
 ) {
 	val uiState by authViewModel.uiState.collectAsState()
 	val errorMessages by authViewModel.errorMessage.collectAsState()
+	var isForgetting by remember { mutableStateOf(false) }
 
 	val shouldBlur by remember(errorMessages, uiState) {
 		derivedStateOf { errorMessages.isNotEmpty() || uiState == AuthViewModel.AuthState.Fetching }
@@ -191,7 +194,7 @@ fun AuthScreen(
 
 			if (authViewModel.isLoggingIn.value) {
 				TextButton(
-					onClick = { /* TODO: Implement forgot password */ },
+					onClick = { isForgetting = true },
 					modifier = Modifier.align(Alignment.End)
 				) {
 					Text(
@@ -331,7 +334,7 @@ fun AuthScreen(
 				) {
 
 					Text(
-						text = "Error",
+						text = "Notification",
 						style = TitleLineLarge,
 						color = MaterialTheme.colorScheme.onSurface,
 						fontSize = 18.sp
@@ -353,4 +356,10 @@ fun AuthScreen(
 		}
 	}
 	LoadingOverlay(isLoading = uiState == AuthViewModel.AuthState.Fetching)
+
+	if (isForgetting) {
+		OtpVerificationScreen(
+			viewModel = authViewModel,
+		) { isForgetting = false; authViewModel.onCancel() }
+	}
 }

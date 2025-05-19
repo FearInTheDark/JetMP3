@@ -8,11 +8,15 @@ import com.google.gson.Gson
 import com.vincent.jetmp3.core.annotation.ApplicationScope
 import com.vincent.jetmp3.data.datastore.authToken
 import com.vincent.jetmp3.domain.AuthService
+import com.vincent.jetmp3.domain.models.request.ForgotRequest
 import com.vincent.jetmp3.domain.models.request.LoginRequest
+import com.vincent.jetmp3.domain.models.request.ResetRequest
 import com.vincent.jetmp3.domain.models.request.SignupRequest
 import com.vincent.jetmp3.domain.models.response.LoginResponse
 import com.vincent.jetmp3.utils.decodeJwt
+import com.vincent.jetmp3.utils.functions.safeApiCall
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -30,7 +34,6 @@ class AuthRepository @Inject constructor(
 	private val expiredAtKey = stringPreferencesKey("expired_at")
 
 	private val _authenticating: MutableStateFlow<Boolean> = MutableStateFlow(true)
-	val authenticating = _authenticating.asStateFlow()
 
 	private val _authValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
 	val authValid = _authValid.asStateFlow()
@@ -103,6 +106,54 @@ class AuthRepository @Inject constructor(
 			_authValid.value = false
 			_errorMessage.value = mutableListOf("Error occurred, try again!")
 		}
+	}
+
+	suspend fun forgotPassword(email: String): Boolean {
+		val forgotResponse = safeApiCall {
+			authService.forgotPassword(ForgotRequest(email))
+		}
+		if (forgotResponse == null) return false
+		_errorMessage.value = mutableListOf(forgotResponse.message)
+		val token = forgotResponse.token
+		val otp = forgotResponse.otp
+
+		context.authToken.edit { prefs ->
+			Log.d("AuthRepository", "forgotPassword: $otp - $token")
+			prefs[stringPreferencesKey("forgot_token")] = token
+			prefs[stringPreferencesKey("otp")] = otp
+		}
+
+		return true
+	}
+
+	suspend fun validateOtp(otp: String): Boolean {
+		delay(1000)
+		val prefs = context.authToken.data.first()
+		val savedOtp = prefs[stringPreferencesKey("otp")]
+		if (savedOtp != otp) {
+			_errorMessage.value = mutableListOf("Invalid OTP")
+			return false
+		}
+		return true
+	}
+
+	suspend fun resetPassword(email: String, otp: String, newPassword: String): Boolean {
+		val resetResponse = safeApiCall {
+			val token = context.authToken.data.first()[stringPreferencesKey("forgot_token")]
+			require(token != null) { "Token is null" }
+			authService.resetPassword(
+				ResetRequest(
+					email = email,
+					otp = otp,
+					token = token,
+					newPassword = newPassword
+				)
+			)
+		}
+
+		if (resetResponse == null) return false
+		_errorMessage.value = mutableListOf(resetResponse.message)
+		return true
 	}
 
 	suspend fun logout() {

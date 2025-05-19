@@ -10,7 +10,6 @@ sealed class Screen(val route: String) {
 	data object Home : Screen("home")
 	data object Search : Screen("search")
 	data object Library : Screen("library")
-	data object Settings : Screen("settings")
 	data object NowPlaying : Screen("now_playing")
 	data object AuthWelcome : Screen("auth_welcome")
 	data object Auth : Screen("auth_screen")
@@ -23,8 +22,15 @@ data class NavigationBarItem(
 	val activeIcon: Int,
 )
 
+data class OptionValue(
+	val painter: Int,
+	val title: String,
+	val action: () -> Unit = {}
+)
+
 data class PlaybackState(
 	var isPlaying: Boolean = false,
+	var isShuffleMode: Boolean = false,
 	val currentIndex: Int = 0,
 	val currentPosition: Long = 0L,
 	val duration: Long = 0L,

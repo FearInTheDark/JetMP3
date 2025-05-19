@@ -14,6 +14,7 @@ fun MediaItem.string(): String {
 }
 
 fun durationToString(durationMs: Long): String {
+	if (durationMs <= 0) return "00:00"
 	val totalSeconds = durationMs / 1000
 	val minutes = totalSeconds / 60
 	val seconds = totalSeconds % 60

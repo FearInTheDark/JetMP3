@@ -2,6 +2,7 @@ package com.vincent.jetmp3.ui.viewmodels
 
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,7 +10,6 @@ import com.vincent.jetmp3.data.repository.AuthRepository
 import com.vincent.jetmp3.domain.models.request.LoginRequest
 import com.vincent.jetmp3.domain.models.request.SignupRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -35,9 +35,20 @@ class AuthViewModel @Inject constructor(
 	private val _username: MutableState<String> = mutableStateOf("")
 	val username: MutableState<String> = _username
 
+	private val _forgotStep: MutableState<Int> = mutableIntStateOf(1)
+	val forgotStep = _forgotStep
+
+	private val _forgotEmail = mutableStateOf("")
+	val forgotEmail: MutableState<String> = _forgotEmail
+
+	private val _otp = mutableStateOf(List(6) {""})
+	val otp: MutableState<List<String>> = _otp
+
+	private val _newPassword = mutableStateOf("")
+	val newPassword: MutableState<String> = _newPassword
+
 	val errorMessage = authRepository.errorMessage
 	val authValid = authRepository.authValid
-	val authenticating = authRepository.authenticating
 
 	private fun login() {
 		if (_email.value.isEmpty() || _password.value.isEmpty()) return
@@ -77,6 +88,41 @@ class AuthViewModel @Inject constructor(
 
 	fun clearErrors() {
 		authRepository.clearErrors()
+	}
+
+	fun handleForgot() {
+		if (_forgotEmail.value.isEmpty()) return
+		viewModelScope.launch {
+			_uiState.value = AuthState.Fetching
+			if (_forgotStep.value == 1) {
+				if (authRepository.forgotPassword(_forgotEmail.value))
+					_forgotStep.value = 2
+			} else if (_forgotStep.value == 2) {
+				if (authRepository.validateOtp(_otp.value.joinToString(""))) {
+					_forgotStep.value = 3
+				}
+			} else if (_forgotStep.value == 3) {
+				if (authRepository.resetPassword(
+					email = _forgotEmail.value,
+					otp = _otp.value.joinToString(""),
+					newPassword = _newPassword.value
+				)) {
+					_forgotStep.value = 4
+					clearForgotCredentials()
+				}
+			}
+			_uiState.value = AuthState.Ready
+		}
+	}
+
+	private fun clearForgotCredentials() {
+		_forgotEmail.value = ""
+		_otp.value = List(6) { "" }
+		_newPassword.value = ""
+	}
+
+	fun onCancel() {
+		_forgotStep.value = 1
 	}
 
 	sealed class AuthState {

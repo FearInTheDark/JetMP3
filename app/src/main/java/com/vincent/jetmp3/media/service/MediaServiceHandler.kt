@@ -1,10 +1,9 @@
 package com.vincent.jetmp3.media.service
 
-import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.MediaSource
 import arrow.core.Either
 import com.vincent.jetmp3.data.constants.ArtistType
 import com.vincent.jetmp3.data.models.NestArtist
@@ -26,10 +25,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MediaServiceHandler @Inject constructor(
+class MediaServiceHandler @UnstableApi
+@Inject constructor(
 	private val exoPlayer: ExoPlayer,
 	private val trackAdditions: TrackAdditions
 ) : Player.Listener {
+
+	private val trackCache = mutableMapOf<Long, Track>()
+	private val artistCache = mutableMapOf<Long, Either<NestArtist?, SpotifyArtist?>>()
 
 	private val _playerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Initial)
 	val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
@@ -45,14 +48,35 @@ class MediaServiceHandler @Inject constructor(
 	}
 
 	fun setMediaItemList(tracks: List<Track>, index: Int = 0) {
-//		if (exoPlayer.isPlaying) return
-		val items = tracks.map { it.toMediaItem() }
+		if (_playbackState.value.queue == tracks) return setIndex(index)
+
+		val items = tracks.map { track ->
+			trackCache[track.id] = track // Cache track by ID
+			track.toMediaItem()
+		}
+
 		_playbackState.value = _playbackState.value.copy(
 			queue = tracks,
 			trackList = items
 		)
-		exoPlayer.setMediaItems(items)
-		exoPlayer.seekTo(index, 0)
+
+		exoPlayer.setMediaItems(items, index, 0)
+		exoPlayer.prepare()
+	}
+
+	fun setIndex(index: Int = 0) {
+		if (index == exoPlayer.currentMediaItemIndex) return
+		exoPlayer.seekToDefaultPosition(index)
+		exoPlayer.playWhenReady = true
+		_playerState.value = PlayerState.Playing(true)
+	}
+
+	fun switchShuffleMode() {
+		val isShuffled = exoPlayer.shuffleModeEnabled
+		exoPlayer.shuffleModeEnabled = !isShuffled
+		_playbackState.value = _playbackState.value.copy(
+			isShuffleMode = !isShuffled
+		)
 		exoPlayer.prepare()
 	}
 
@@ -113,43 +137,49 @@ class MediaServiceHandler @Inject constructor(
 
 	override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
 		super.onMediaItemTransition(mediaItem, reason)
-
 		_playerState.value = PlayerState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
 		updatePlaybackState()
 		updateCurrentArtist()
-		Log.d("MediaServiceHandler", "CurrentTrack: ${_playbackState.value.currentTrack}")
+		addToHistory(trackId = mediaItem?.mediaId ?: "-1")
+
 	}
 
 	private fun updateCurrentArtist() {
 		val track = _playbackState.value.currentMediaItem ?: return
-		Log.d("MediaServiceHandler", "CurrentTrack: $track")
+		val trackId = track.mediaId.toLongOrNull() ?: return
+
+		artistCache[trackId]?.let { cached ->
+			_playbackState.value = _playbackState.value.copy(currentArtist = cached)
+			return
+		}
+
 		scope.launch {
-			val artist: Either<NestArtist?, SpotifyArtist?> = try {
-				when (track.mediaMetadata.artist) {
-					ArtistType.NestArtist.name -> Either.Left(
-						trackAdditions.getNestArtist(
-							track.mediaMetadata.extras?.getString("artistId").toString()
-						)
+			val artist: Either<NestArtist?, SpotifyArtist?> = when (track.mediaMetadata.artist) {
+				ArtistType.NestArtist.name -> Either.Left(
+					trackAdditions.getNestArtist(
+						track.mediaMetadata.extras?.getString("artistId").orEmpty()
 					)
+				)
 
-					ArtistType.SpotifyArtist.name -> Either.Right(
-						trackAdditions.getSpotifyArtist(
-							track.mediaMetadata.extras?.getString("artistId").toString()
-						)
+				ArtistType.SpotifyArtist.name -> Either.Right(
+					trackAdditions.getSpotifyArtist(
+						track.mediaMetadata.extras?.getString("artistId").orEmpty()
 					)
+				)
 
-					else -> Either.Left(null)
-				}
-			} catch (e: Exception) {
-				Log.e("MediaServiceHandler", "Error fetching artist: ${e.message} - ${e.cause}")
-				Either.Right(null)
+				else -> Either.Left(null)
 			}
 
-			Log.d("MediaServiceHandler", "FetchedArtist: $artist")
+			artistCache[trackId] = artist
+
 			_playbackState.value = _playbackState.value.copy(
 				currentArtist = artist
 			)
 		}
+	}
+
+	private fun addToHistory(trackId: String) = scope.launch {
+		trackAdditions.addListenHistory(trackId)
 	}
 
 	private suspend fun playOrPause() {
@@ -186,15 +216,15 @@ class MediaServiceHandler @Inject constructor(
 	) {
 		_playbackState.value = _playbackState.value.copy(
 			isPlaying = isPlaying,
+			isBuffering = isBuffering,
+			duration = exoPlayer.duration,
 			currentIndex = exoPlayer.currentMediaItemIndex,
 			currentPosition = exoPlayer.currentPosition,
-			duration = exoPlayer.duration,
-			bufferedPosition = exoPlayer.bufferedPosition,
-			trackList = exoPlayer.currentTimeline.windowCount.takeIf { it > 0 }?.let {
-				(0 until it).mapNotNull { i -> exoPlayer.getMediaItemAt(i) }
-			} ?: emptyList(),
 			currentMediaItem = exoPlayer.currentMediaItem,
-			isBuffering = isBuffering,
+			bufferedPosition = exoPlayer.bufferedPosition,
+//			trackList = exoPlayer.currentTimeline.windowCount.takeIf { it > 0 }?.let {
+//				(0 until it).mapNotNull { i -> exoPlayer.getMediaItemAt(i) }
+//			} ?: emptyList(),
 			hasEnded = hasEnded
 		)
 	}

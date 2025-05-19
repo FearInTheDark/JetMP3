@@ -203,6 +203,9 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 							},
 							colors = TextFieldDefaults.colors(
 								focusedTextColor = MaterialTheme.colorScheme.onSurface,
+								focusedContainerColor = MaterialTheme.colorScheme.background,
+								disabledContainerColor = MaterialTheme.colorScheme.background,
+								unfocusedContainerColor = MaterialTheme.colorScheme.background,
 							),
 						)
 					},

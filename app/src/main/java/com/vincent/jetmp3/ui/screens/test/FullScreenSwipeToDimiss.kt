@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -13,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.IntOffset
@@ -31,12 +29,8 @@ fun FullScreenSwipeToDismiss(
 
 	Box(
 		modifier = Modifier
-			.fillMaxSize()
-			.clip(RoundedCornerShape(16.dp))
 			.offset { IntOffset(0, offsetY.value.toInt()) }
-			.graphicsLayer {
-				alpha = 1f - (offsetY.value / screenHeight.toPx()).coerceIn(0f, 1f)
-			}
+			.clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
 			.pointerInput(Unit) {
 				detectVerticalDragGestures(
 					onVerticalDrag = { change, dragAmount ->

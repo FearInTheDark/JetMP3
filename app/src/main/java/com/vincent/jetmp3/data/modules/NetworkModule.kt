@@ -1,23 +1,35 @@
 package com.vincent.jetmp3.data.modules
 
+import android.content.Context
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.vincent.jetmp3.data.resolver.NetworkConnectivityObserverImpl
 import com.vincent.jetmp3.domain.AuthService
 import com.vincent.jetmp3.domain.ImagePaletteService
 import com.vincent.jetmp3.domain.NestService
+import com.vincent.jetmp3.domain.NetworkConnectivityObserver
 import com.vincent.jetmp3.domain.SpotifyDeveloperService
 import com.vincent.jetmp3.domain.SpotifyDeveloperTokenService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit.Builder
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+	@Provides
+	@Singleton
+	fun provideNetworkObserver(@ApplicationContext context: Context) : NetworkConnectivityObserver {
+		return NetworkConnectivityObserverImpl(context)
+	}
 
 	@Provides
 	@Singleton
@@ -28,8 +40,20 @@ object NetworkModule {
 
 	@Provides
 	@Singleton
-	fun provideRetrofit(moshi: Moshi): Builder {
+	fun provideOkHttpClient(): OkHttpClient {
+		return OkHttpClient.Builder()
+			.connectTimeout(30, TimeUnit.SECONDS)
+			.readTimeout(30, TimeUnit.SECONDS)
+			.writeTimeout(30, TimeUnit.SECONDS)
+			.retryOnConnectionFailure(true)
+			.build()
+	}
+
+	@Provides
+	@Singleton
+	fun provideRetrofit(moshi: Moshi, client: OkHttpClient): Builder {
 		return Builder()
+			.client(client)
 			.addConverterFactory(MoshiConverterFactory.create(moshi))
 	}
 

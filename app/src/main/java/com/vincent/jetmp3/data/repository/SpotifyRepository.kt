@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okio.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -71,17 +72,20 @@ class SpotifyRepository @Inject constructor(
 
 			_fetchState.value = FetchState.SUCCESS
 			return artist
-		} catch (e: Exception) {
-			_fetchState.value = FetchState.ERROR
-			Log.e("SpotifyManager", "fetchArtistInfo: ${e.message}")
-			return null
 		} catch (io: IOException) {
 			_fetchState.value = FetchState.ERROR
 			Log.e("SpotifyManager", "fetchArtistInfo: ${io.message}")
 			return null
+		} catch (e: Exception) {
+			_fetchState.value = FetchState.ERROR
+			Log.e("SpotifyManager", "fetchArtistInfo: ${e.message}")
+			return null
 		} catch (e: Throwable) {
 			_fetchState.value = FetchState.ERROR
 			Log.e("SpotifyManager", "fetchArtistInfo: ${e.message}")
+			return null
+		} catch (e: SocketTimeoutException) {
+			Log.e("TrackRepository", "SocketTimeoutException: ${e.message}")
 			return null
 		} finally {
 			delay(1000)

@@ -1,5 +1,6 @@
 package com.vincent.jetmp3.utils.functions
 
+import android.util.Log
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -23,6 +24,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.internal.http2.ConnectionShutdownException
+import retrofit2.Response
+import java.io.IOException
+import java.net.SocketTimeoutException
 
 fun Modifier.fadingEdge(
 	brush: Brush = Brush.horizontalGradient(
@@ -39,10 +46,10 @@ fun Modifier.fadingEdge(
 	}
 
 fun Modifier.scaleOnTap(
-	scale: Float,
-	onPressStart: () -> Unit,
-	onPressEnd: () -> Unit,
-	onTap: (() -> Unit)?
+	scale: Float = 0.95f,
+	onPressStart: () -> Unit = {},
+	onPressEnd: () -> Unit = {},
+	onTap: () -> Unit = {}
 ) = this
 	.scale(scale)
 	.pointerInput(Unit) {
@@ -55,7 +62,7 @@ fun Modifier.scaleOnTap(
 					onPressEnd()
 				}
 			},
-			onTap = { onTap?.let { onTap() } }
+			onTap = { onTap() }
 		)
 	}
 
@@ -72,8 +79,8 @@ fun Modifier.shimmerBackground(shape: Shape = RectangleShape): Modifier = compos
 		label = "Shimmer Animation"
 	)
 	val shimmerColors = listOf(
-		Color.LightGray.copy(alpha = 0.9f),
-		Color.LightGray.copy(alpha = 0.4f),
+		Color.DarkGray.copy(alpha = 0.6f),
+		Color.DarkGray.copy(alpha = 0.4f),
 	)
 	val brush = Brush.linearGradient(
 		colors = shimmerColors,
@@ -82,4 +89,34 @@ fun Modifier.shimmerBackground(shape: Shape = RectangleShape): Modifier = compos
 		tileMode = TileMode.Mirror,
 	)
 	return@composed this.then(background(brush, shape))
+}
+
+suspend fun <T> safeApiCall(
+	apiCall: suspend () -> Response<T>
+): T? = withContext(Dispatchers.IO) {
+	try {
+		val response = apiCall()
+		Log.d("API Response", "Response: ${response.body()}")
+		if (response.isSuccessful) {
+			response.body()
+		} else {
+			Log.e("API Error", "Error: ${response.errorBody()?.string()}")
+			null
+		}
+	} catch (e: IOException) {
+		Log.e("API Error", "IOException: ${e.message}")
+		null
+	} catch (e: SocketTimeoutException) {
+		Log.e("API Error", "SocketTimeoutException: ${e.message}")
+		null
+	} catch (e: ConnectionShutdownException) {
+		Log.e("API Error", "ConnectionShutdownException: ${e.message}")
+		null
+	} catch (e: IllegalStateException) {
+		Log.e("API Error", "IllegalStateException: ${e.message}")
+		null
+	} catch (e: Exception) {
+		Log.e("API Error", "Exception: ${e.message}")
+		null
+	}
 }

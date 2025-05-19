@@ -2,7 +2,7 @@ package com.vincent.jetmp3.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Blue80 = Color(0xFF2557EE)
+val Blue80 = Color(0xFF4670E7)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 
 val Purple40 = Color(0xFF6650a4)

@@ -4,13 +4,14 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import com.vincent.jetmp3.domain.ImagePaletteService
 import com.vincent.jetmp3.domain.NestService
+import com.vincent.jetmp3.domain.models.CategoryScreenData
 import com.vincent.jetmp3.domain.models.RecentCategoryItem
 import com.vincent.jetmp3.domain.models.request.VibrantRequest
 import com.vincent.jetmp3.domain.models.response.NestResponse
+import com.vincent.jetmp3.domain.models.response.SearchResult
+import com.vincent.jetmp3.utils.functions.safeApiCall
 import com.vincent.jetmp3.utils.paletteToColor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,65 +22,82 @@ class NestRepository @Inject constructor(
 	private val authRepository: AuthRepository,
 	private val imagePaletteService: ImagePaletteService,
 ) {
-	suspend fun search(query: String) = withContext(Dispatchers.IO) {
-		try {
-			val response = nestService.search(
-				auth = "Bearer ${authRepository.accessToken.value}",
-				query = query,
-			)
-			if (response.isSuccessful) {
-				Log.d("NestRepository", "Search successful: ${response.body()}")
-				response.body()
-			} else {
-				throw IOException("Error: ${response.errorBody()?.string()}")
-			}
-		} catch (e: IOException) {
-			throw IOException("Network error: ${e.message}")
-		} catch (e: Exception) {
-			throw Exception("Unexpected error: ${e.message}")
-		}
+	suspend fun search(query: String): SearchResult? = safeApiCall {
+		nestService.search(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			query = query
+		)
 	}
 
-	suspend fun toggleFavorite(trackId: Long): NestResponse = withContext(Dispatchers.IO) {
-		try {
-			val res = nestService.toggleFavorite(
-				auth = "Bearer ${authRepository.accessToken.value}",
-				trackId = trackId
-			)
-			Log.d("NestRepository", "Toggle favorite successful: $res")
-			res
-		} catch (e: IOException) {
-			throw IOException("Network error: ${e.message}")
-		} catch (e: Exception) {
-			throw Exception("Unexpected error: ${e.message}")
-		}
+	suspend fun toggleFavorite(trackId: Long): NestResponse? = safeApiCall {
+		nestService.toggleFavorite(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			trackId = trackId
+		)
 	}
 
-	suspend fun getDominantColor(imageUrl: String): Color {
+	suspend fun addTrackToNewPlaylist(playlistName: String, trackId: Long): NestResponse? = safeApiCall {
+		nestService.addTrackToNewPlaylist(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			trackId = trackId,
+			body = mapOf("name" to playlistName)
+		)
+	}
+
+	suspend fun toggleTrackToPlaylist(playlistId: Number, trackId: Number): NestResponse? = safeApiCall {
+		nestService.toggleTrackToPlaylist(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			playlistId = playlistId,
+			trackId = trackId
+		)
+	}
+
+	suspend fun getDominantColor(imageUrl: String?): Color {
+		val defaultColor = Color(0xFF7062f0)
+
+		if (imageUrl == null) return defaultColor
+
 		return try {
 			delay(300)
-			val rgb = imagePaletteService.getPalette(VibrantRequest(imageUrl)).darkVibrant
+			val rgb = imagePaletteService
+				.getPalette(VibrantRequest(imageUrl))
+				.darkVibrant
+
 			paletteToColor(rgb)
-		} catch (e: Exception) {
-			Color.Gray
 		} catch (e: IOException) {
-			Color.Gray
+			Log.e("Palette", "Network error: ${e.message}")
+			defaultColor
+		} catch (e: Exception) {
+			Log.e("Palette", "Unexpected error: ${e.message}")
+			defaultColor
 		}
 	}
 
-	suspend fun getRecentCategories(): RecentCategoryItem? = withContext(Dispatchers.IO) {
-		try {
-			val res = nestService.getCategories(
-				auth = "Bearer ${authRepository.accessToken.value}"
-			)
-			Log.d("NestRepository", "Get recent categories successful: ${res.body()}")
-			res.body()
-		} catch (e: IOException) {
-			Log.e("NestRepository", "Network error: ${e.message}")
-			null
-		} catch (e: Exception) {
-			Log.e("NestRepository", "Unexpected error: ${e.message}")
-			null
+	suspend fun getRecentCategories(): RecentCategoryItem? = safeApiCall {
+		nestService.getCategories(
+			auth = "Bearer ${authRepository.accessToken.value}"
+		)
+	}
+
+	suspend fun getCategoryData(path: String): CategoryScreenData? = safeApiCall {
+		val authHeader = "Bearer ${authRepository.accessToken.value}"
+		val category = path.substringBefore("/")
+		val id = path.substringAfterLast("/")
+
+		Log.d("NestRepository", "Path: $path")
+
+		when (category) {
+			"favorites" -> nestService.getFavoriteData(authHeader)
+			"playlists" -> nestService.getPlaylistData(auth = authHeader, playlistId = id)
+			else -> nestService.getHistoryData(authHeader)
 		}
 	}
+
+	suspend fun deletePlaylist(playlistId: Int): NestResponse? = safeApiCall {
+		nestService.deletePlaylist(
+			auth = "Bearer ${authRepository.accessToken.value}",
+			playlistId = playlistId
+		)
+	}
+
 }
